@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Taller B1-T1: Entorno, Arquitectura y Extracción</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 15mm 18mm;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1f2937;
+      line-height: 1.45;
+      font-size: 11pt;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      font-size: 18pt;
+      margin: 0 0 4px 0;
+      color: #111827;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 9.5pt;
+      color: #4b5563;
+      margin-bottom: 16px;
+    }
+    h2 {
+      font-size: 12.5pt;
+      color: #1e40af;
+      margin: 14px 0 6px 0;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 3px;
+    }
+    p, ul {
+      margin: 4px 0 8px 0;
+    }
+    ul {
+      padding-left: 18px;
+    }
+    li {
+      margin-bottom: 3px;
+    }
+    code {
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 9.5pt;
+      background-color: #f3f4f6;
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #1f2937;
+    }
+    pre {
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 9pt;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 8px 12px;
+      margin: 6px 0 10px 0;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .terminal-box {
+      background-color: #18181b;
+      color: #f4f4f5;
+      border-radius: 6px;
+      border: 1px solid #27272a;
+      padding: 10px 14px;
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 8.8pt;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 8px 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .term-env { color: #4ade80; font-weight: 600; }
+    .term-user { color: #38bdf8; font-weight: bold; }
+    .term-path { color: #818cf8; }
+    .term-out { color: #e4e4e7; }
+  </style>
+</head>
+<body>
+
+  <h1>Taller B1-T1: Arquitectura, Entorno y Extractor</h1>
+  <div class="subtitle">MIAX - BME | Entorno Python, Modelado DataClass y Verificación de Ingesta</div>
+
+  <h2>1. Entorno Virtual y Dependencias Plug-and-Play</h2>
+  <p>Creación del entorno local aislado y registro del paquete en modo editable:</p>
+  <pre><code>python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install -e .</code></pre>
+
+  <h2>2. Estructura de Directorios (/src)</h2>
+  <p>Jerarquía desacoplada para separar la ingesta de los modelos y utilidades:</p>
+  <pre><code>src/toolkit/
+├── __init__.py
+├── data/       # Extracción y conectores de mercado (base.py, yahoo.py)
+├── models/     # DataClasses de series de precios (series.py)
+└── utils/      # Métodos auxiliares y de limpieza</code></pre>
+
+  <h2>3. Modelado: DataClass PriceSeries</h2>
+  <p>En <code>src/toolkit/models/series.py</code>, cálculo automático de retorno medio y desviación típica:</p>
+  <pre><code>@dataclass
+class PriceSeries:
+    ticker: str
+    asset_type: str
+    data: pd.DataFrame
+    mean_return: float = field(init=False)
+    std_return: float = field(init=False)
+
+    def __post_init__(self):
+        if "close" not in self.data.columns:
+            raise ValueError("Los datos deben incluir una columna 'close'.")
+        if "returns" not in self.data.columns:
+            self.data["returns"] = self.data["close"].pct_change()
+        clean = self.data["returns"].dropna()
+        self.mean_return = float(clean.mean()) if not clean.empty else 0.0
+        self.std_return = float(clean.std()) if not clean.empty else 0.0</code></pre>
+
+  <h2>4. Validación de Extracción Multifuentey Descarga en Lote</h2>
+  <p>Ejecución exitosa de <code>examples/test_fetch.py</code> descargando activos individuales e índices:</p>
+
+  <div class="terminal-box"><span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$ python examples/test_fetch.py
+<span class="term-out">Loaded: AAPL | Mean Return: 0.00066 | Std: 0.02045</span>
+<span class="term-out">Batch item: MSFT (250 trading days)</span>
+<span class="term-out">Batch item: SAN.MC (255 trading days)</span>
+<span class="term-out">Batch item: ^IBEX (255 trading days)</span>
+<span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$</div>
+
+</body>
+</html>

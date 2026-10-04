@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Taller B1-T1: Git y Configuración SSH</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 15mm 18mm;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1f2937;
+      line-height: 1.45;
+      font-size: 11pt;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      font-size: 18pt;
+      margin: 0 0 4px 0;
+      color: #111827;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 9.5pt;
+      color: #4b5563;
+      margin-bottom: 16px;
+    }
+    h2 {
+      font-size: 12pt;
+      color: #1e40af;
+      margin: 14px 0 6px 0;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 3px;
+    }
+    p {
+      margin: 4px 0 6px 0;
+    }
+    ol {
+      margin: 4px 0 8px 0;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 4px;
+    }
+    code {
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 9.5pt;
+      background-color: #f3f4f6;
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #1f2937;
+    }
+    pre {
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 9pt;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 8px 12px;
+      margin: 5px 0 8px 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .terminal-box {
+      background-color: #18181b;
+      color: #f4f4f5;
+      border-radius: 6px;
+      border: 1px solid #27272a;
+      padding: 10px 14px;
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 8.8pt;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 6px 0 10px 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .term-cmd { color: #38bdf8; font-weight: 600; }
+    .term-out { color: #a1a1aa; }
+    .term-success { color: #4ade80; }
+  </style>
+</head>
+<body>
+
+  <h1>Taller B1-T1: Control de Versiones y Claves SSH</h1>
+  <div class="subtitle">MIAX - BME | Inicialización de Repositorio Local y Autenticación Criptográfica con GitHub</div>
+
+  <h2>1. Inicialización del Repositorio Local</h2>
+  <p>Accede al directorio del proyecto en tu máquina local e inicializa la rama principal con la nomenclatura estándar <code>main</code>:</p>
+  <pre><code>cd /home/sergio/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1
+git init -b main</code></pre>
+
+  <h2>2. Generación del Par de Claves SSH (Ed25519)</h2>
+  <p>Genera una clave criptográfica moderna y segura asociada a la cuenta de GitHub:</p>
+  <pre><code>ssh-keygen -t ed25519 -C "tu_correo@ejemplo.com"</code></pre>
+  <p>Pulsa <code>Enter</code> para aceptar la ruta predeterminada (<code>~/.ssh/id_ed25519</code>) y define opcionalmente una contraseña de paso.</p>
+
+  <h2>3. Activación del Agente SSH y Registro de la Clave</h2>
+  <p>Inicia el agente SSH en segundo plano y añade la clave privada recién creada:</p>
+  <pre><code>eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519</code></pre>
+
+  <h2>4. Vinculación de la Clave Pública en GitHub</h2>
+  <ol>
+    <li>Copia el contenido completo de la clave pública:
+      <pre><code>cat ~/.ssh/id_ed25519.pub</code></pre>
+    </li>
+    <li>En GitHub, dirígete a <strong>Settings &gt; SSH and GPG keys &gt; New SSH key</strong>.</li>
+    <li>Asigna un título identificativo (p. ej., <em>Portátil Dell Linux</em>) y pega la clave pública.</li>
+  </ol>
+
+  <h2>5. Verificación de Autenticación</h2>
+  <p>Prueba de conexión con los servidores de GitHub desde la terminal:</p>
+  <div class="terminal-box"><span class="term-cmd">$ ssh -T git@github.com</span>
+<span class="term-out">Hi z4ntr0n1c! You've successfully authenticated, but GitHub does not provide shell access.</span></div>
+
+  <h2>6. Configuración del Repositorio Remoto</h2>
+  <p>Asocia el repositorio local a la URL de SSH para realizar operaciones remotas sin ingresar credenciales manualmente:</p>
+  <pre><code>git remote add origin git@github.com:z4ntr0n1c/talleres_bme_miax_2026.git
+git add .
+git commit -m "Initial commit"
+git push -u origin main</code></pre>
+
+</body>
+</html>
