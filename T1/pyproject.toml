@@ -1,0 +1,11 @@
+[project]
+name = "t1-bme-miax-toolkit"
+version = "0.1.0"
+description = "Financial data extraction, portfolio modeling and Monte Carlo toolbox"
+authors = [{ name = "Group Members" }]
+dependencies = [
+    "yfinance>=0.2.36",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0"
+]

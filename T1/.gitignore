@@ -1,0 +1,20 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Environments
+.venv/
+env/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+
+# Data / outputs
+data/
+reports/
+*.png
