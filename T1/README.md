@@ -325,11 +325,11 @@ Ejecuta los scripts de prueba completos:
 
 Las guías del taller se encuentran disponibles en formato HTML y PDF en [`doc/`](doc/):
 - **Arquitectura y Especificación UML** — [`doc/architecture.md`](doc/architecture.md)
-- **Parte 1 — Git y Configuración SSH** (`guia_taller_parte1_git_ssh.pdf` · [`HTML`](doc/guia_taller_parte1_git_ssh.html))
-- **Parte 2 — Arquitectura, Entorno y Extractor** (`guia_taller_parte2.pdf` · [`HTML`](doc/guia_taller_parte2.html))
-- **Parte 3 — Modelado Cuantitativo y Gestión de Carteras** (`guia_taller_parte3_modelado_cartera.pdf` · [`HTML`](doc/guia_taller_parte3_modelado_cartera.html))
-- **Parte 4 — Motor Estocástico de Monte Carlo y Difusión** (`guia_taller_parte4_monte_carlo.pdf` · [`HTML`](doc/guia_taller_parte4_monte_carlo.html))
-- **Parte 5 — Preprocesado, Validación, Reportes y Cuadro de Mando** (`guia_taller_parte5_limpieza_reportes.pdf` · [`HTML`](doc/guia_taller_parte5_limpieza_reportes.html))
+- **Parte 1 — Git y Configuración SSH** (`guia_taller_parte1_git_ssh.pdf` · [`HTML`](doc/guia_taller_parte1_git_ssh.html) | [`PDF`](doc/guia_taller_parte1_git_ssh.pdf)
+- **Parte 2 — Arquitectura, Entorno y Extractor** (`guia_taller_parte2.pdf` · [`HTML`](doc/guia_taller_parte2_arquitectura_extraccion.html) | [`PDF`](doc/guia_taller_parte2_arquitectura_extraccion.pdf))
+- **Parte 3 — Modelado Cuantitativo y Gestión de Carteras** (`guia_taller_parte3_modelado_cartera.pdf` · [`HTML`](doc/guia_taller_parte3_modelado_cartera.html) | [`PDF`](doc/guia_taller_parte3_modelado_cartera.pdf)
+- **Parte 4 — Motor Estocástico de Monte Carlo y Difusión** (`guia_taller_parte4_monte_carlo.pdf` · [`HTML`](doc/guia_taller_parte4_monte_carlo.html) | [`PDF`](doc/guia_taller_parte4_monte_carlo.pdf))
+- **Parte 5 — Preprocesado, Validación, Reportes y Cuadro de Mando** (`guia_taller_parte5_limpieza_reportes.pdf` · [`HTML`](doc/guia_taller_parte5_limpieza_reportes.html) | [`PDF`](doc/guia_taller_parte5_limpieza_reportes.pdf))
 - **Diapositivas y Enunciado Oficial** — `Taller_B1_T1.pdf`
 
 ---
