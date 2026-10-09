@@ -139,16 +139,57 @@ aligned_returns = align_calendar_series(series_dict, join_method="inner")</code>
 ===========================================================================
 2. TESTING PORTFOLIO MARKDOWN REPORT & VISUAL DASHBOARD
 ===========================================================================
+
    Fetching market data for ['AAPL', 'MSFT', 'SAN.MC', '^IBEX']...
 
-   [SUCCESS] Markdown Report generated and saved to: examples/reports/portfolio_report.md
-   - Cumulative Return:        +26.47% | Annualized Return: +28.43%
-   - Annualized Volatility:    15.23%  | Sharpe Ratio (Rf=3%): 1.67
-   - Max Drawdown:             -11.41% | 95% Daily VaR: -1.42% | CVaR: -2.10%
-   - Diagnostics Alert: ⚠️ Concentration Risk Warning: Asset AAPL represents 50.0% of portfolio.
-   - Diagnostics Alert: ⚠️ Collinearity Warning: Strong correlation between SAN.MC & ^IBEX (r = 0.80).
+   [SUCCESS] Markdown Report generated and saved to: /home/sergio/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1/examples/reports/portfolio_report.md
 
-   [SUCCESS] 4-Panel Analytics Dashboard exported to: examples/plots/portfolio_dashboard.png
+   --- Preview of Generated Markdown Report (First 40 lines) ---
+   # 📊 Portfolio Quantitative Analysis & Risk Report: Tech-Weighted European Hybrid
+   
+   > Generated on: **2024-12-31** | MIAX-BME Quantitative Analytics Toolkit  
+   > Base Nominal Capital: **100,000.00** | Observations: **248 trading days** (2024-01-03 to 2024-12-31)
+   
+   ---
+   
+   ## 1. Executive Summary
+   
+   | Metric | Portfolio Value | Description / Interpretation |
+   |---|---|---|
+   | **Cumulative Return** | **+26.47%** | Total compound growth over the observation period |
+   | **Annualized Return** | **+28.43%** | Geometric annualized expected compound rate |
+   | **Annualized Volatility** | **15.23%** | Annualized standard deviation ($\sigma \times \sqrt{252}$) |
+   | **Sharpe Ratio (Rf=3.0%)** | **1.67** | Excess return per unit of volatility |
+   | **Maximum Drawdown** | **-11.41%** | Maximum peak-to-trough decline |
+   | **Historical Daily VaR (95%)** | **-1.42%** | Maximum expected daily loss at 95% confidence (Empirical) |
+   | **Parametric Daily VaR (95%)** | **-1.48%** | Daily 95% Value at Risk under Gaussian assumption |
+   | **Daily CVaR / Expected Shortfall (95%)** | **-2.10%** | Average loss in the worst 5% tail distribution |
+   
+   ---
+   
+   ## 2. Asset Allocation Breakdown
+   
+   | Ticker | Type | Weight | Daily Mean | Ann. Return | Ann. Vol | Sharpe | Max DD |
+   |---|---|---|---|---|---|---|---|
+   | `AAPL` | Equity | 50.0% | +0.0013 | +39.14% | 22.42% | 1.61 | -15.35% |
+   | `MSFT` | Equity | 25.0% | +0.0006 | +16.87% | 19.95% | 0.70 | -15.49% |
+   | `SAN.MC` | Equity | 15.0% | +0.0009 | +24.58% | 25.49% | 0.85 | -18.74% |
+   | `^IBEX` | Equity | 10.0% | +0.0005 | +14.70% | 13.24% | 0.88 | -9.21% |
+   
+   ---
+   
+   ## 3. Cross-Asset Correlation Matrix
+   
+   | | `AAPL` | `MSFT` | `SAN.MC` | `^IBEX` |
+   |---|---|---|---|---|
+   | `AAPL` | 1.000 | 0.477 | -0.008 | 0.043 |
+   | `MSFT` | 0.477 | 1.000 | 0.000 | 0.074 |
+   | `SAN.MC` | -0.008 | 0.000 | 1.000 | 0.805 |
+   [... report continues with Correlation Matrix & Diagnostics ...]
+findfont: Failed to find font weight semibold for DejaVu Sans, now using 700.
+
+   [SUCCESS] 4-Panel Analytics Dashboard exported to: /home/sergio/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1/examples/plots/portfolio_dashboard.png
+
 ===========================================================================
 ALL 4.5 CLEANING, VALIDATION & REPORTING TESTS COMPLETED!
 ===========================================================================</span>
