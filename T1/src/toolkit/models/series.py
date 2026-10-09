@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Optional, Any
 import pandas as pd
 import numpy as np
 
@@ -70,3 +71,53 @@ class PriceSeries:
         if self.returns.empty:
             return 0.0
         return float(np.percentile(self.returns, (1.0 - confidence_level) * 100.0))
+
+    def simulate_montecarlo(
+        self,
+        n_simulations: int = 1000,
+        horizon: int = 252,
+        mu: Optional[float] = None,
+        sigma: Optional[float] = None,
+        initial_value: Optional[float] = None,
+        seed: Optional[int] = None,
+    ):
+        """Simulates stochastic price trajectories using Geometric Brownian Motion (GBM).
+
+        Args:
+            n_simulations: Number of paths (default: 1000).
+            horizon: Number of trading days ahead (default: 252).
+            mu: Daily drift (defaults to empirical mean_return).
+            sigma: Daily volatility (defaults to empirical std_return).
+            initial_value: Starting price (defaults to most recent close price).
+            seed: Seed for random number generator.
+
+        Returns:
+            MonteCarloResult instance.
+        """
+        from .monte_carlo import MonteCarloEngine
+
+        init_val = initial_value if initial_value is not None else float(self.close.iloc[-1])
+        drift = mu if mu is not None else self.mean_return
+        vol = sigma if sigma is not None else self.std_return
+
+        return MonteCarloEngine.simulate_gbm(
+            initial_value=init_val,
+            mu=drift,
+            sigma=vol,
+            horizon=horizon,
+            n_simulations=n_simulations,
+            seed=seed,
+            name=self.ticker,
+        )
+
+    def plot_montecarlo(
+        self,
+        n_simulations: int = 1000,
+        horizon: int = 252,
+        save_path: Optional[str] = None,
+        show: bool = True,
+        **kwargs,
+    ):
+        """Executes Monte Carlo simulation and renders trajectory and distribution plots."""
+        sim = self.simulate_montecarlo(n_simulations=n_simulations, horizon=horizon, **kwargs)
+        return sim.plot(save_path=save_path, show=show)

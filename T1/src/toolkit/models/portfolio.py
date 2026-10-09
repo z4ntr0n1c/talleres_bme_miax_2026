@@ -281,3 +281,96 @@ class Portfolio:
             f"weights={{{weights_str}}}, mean={self.mean_return:.5f}, "
             f"std={self.std_return:.5f}, sharpe={self.sharpe_ratio():.2f})"
         )
+
+    # -------------------------------------------------------------------------
+    # Monte Carlo Stochastic Simulation (Requirement 4.4)
+    # -------------------------------------------------------------------------
+
+    def simulate_montecarlo(
+        self,
+        n_simulations: int = 1000,
+        horizon: int = 252,
+        mu: Optional[float] = None,
+        sigma: Optional[float] = None,
+        initial_capital: Optional[float] = None,
+        seed: Optional[int] = None,
+        multivariate: bool = True,
+    ):
+        """Simulates future portfolio trajectories using Monte Carlo stochastic diffusion.
+
+        Supports two modeling approaches:
+          1. Correlated multivariate Geometric Brownian Motion (multivariate=True, default):
+             Takes individual asset drifts and the full empirical covariance matrix
+             into account via Cholesky decomposition.
+          2. Aggregate portfolio Geometric Brownian Motion (multivariate=False):
+             Projects total capital using the portfolio's aggregate drift and volatility.
+
+        Args:
+            n_simulations: Total number of Monte Carlo paths to generate (default: 1,000).
+            horizon: Forward projection horizon in trading days (default: 252 days = 1 year).
+            mu: Expected daily drift parameter (overrides empirical mean if provided).
+            sigma: Expected daily volatility parameter (overrides empirical std if provided).
+            initial_capital: Starting capital (defaults to self.initial_capital).
+            seed: Random seed for deterministic reproducibility.
+            multivariate: Whether to perform correlated multivariate asset simulation.
+
+        Returns:
+            MonteCarloResult: Object encapsulating all paths, statistics, risk metrics, and plots.
+        """
+        from .monte_carlo import MonteCarloEngine
+
+        cap = initial_capital if initial_capital is not None else self.initial_capital
+
+        if multivariate and len(self.assets) > 1 and mu is None and sigma is None:
+            mu_vec = np.array([asset.mean_return for asset in self.assets])
+            cov_mat = self.covariance_matrix.values
+            return MonteCarloEngine.simulate_multivariate_gbm(
+                initial_capital=cap,
+                weights=self.weights_vector,
+                mu_vector=mu_vec,
+                cov_matrix=cov_mat,
+                horizon=horizon,
+                n_simulations=n_simulations,
+                seed=seed,
+                name=self.name,
+            )
+        else:
+            drift = mu if mu is not None else self.mean_return
+            vol = sigma if sigma is not None else self.std_return
+            return MonteCarloEngine.simulate_gbm(
+                initial_value=cap,
+                mu=drift,
+                sigma=vol,
+                horizon=horizon,
+                n_simulations=n_simulations,
+                seed=seed,
+                name=self.name,
+            )
+
+    def plot_montecarlo(
+        self,
+        n_simulations: int = 1000,
+        horizon: int = 252,
+        save_path: Optional[str] = None,
+        show: bool = True,
+        **kwargs,
+    ):
+        """Executes Monte Carlo simulation and renders trajectory and distribution plots.
+
+        Args:
+            n_simulations: Number of paths (default: 1,000).
+            horizon: Time horizon in trading days (default: 252).
+            save_path: Optional file path to export image.
+            show: Whether to display interactive plot window.
+            **kwargs: Extra parameters forwarded to simulate_montecarlo.
+
+        Returns:
+            Tuple of (matplotlib.figure.Figure, np.ndarray of Axes).
+        """
+        sim = self.simulate_montecarlo(n_simulations=n_simulations, horizon=horizon, **kwargs)
+        return sim.plot(
+            title=f"Monte Carlo Simulation: {self.name} (Capital: {sim.initial_value:,.0f}€)",
+            save_path=save_path,
+            show=show,
+        )
+

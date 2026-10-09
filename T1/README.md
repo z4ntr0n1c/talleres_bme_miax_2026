@@ -7,13 +7,13 @@
 ## Español
 
 > **Máster MIAX BME · Edición 15**  
-> Bloque B1 · Taller 1: Arquitectura, extracción de datos y modelado de carteras
+> Bloque B1 · Taller 1: Arquitectura, extracción de datos, modelado de carteras y simulación de Monte Carlo
 
 ### Descripción
 
-Este proyecto implementa una toolbox profesional en Python para la ingesta, estandarización y análisis de información bursátil y macroeconómica, así como la gestión y modelado cuantitativo de carteras de inversión.
+Este proyecto implementa una toolbox profesional en Python para la ingesta, estandarización y análisis de información bursátil y macroeconómica, así como la gestión de carteras de inversión y simulación estocástica de **Monte Carlo**.
 
-El diseño sigue una arquitectura modular y desacoplada mediante patrones de diseño orientados a objetos y **DataClasses**, separando estrictamente la capa de extracción de la capa de análisis y modelos.
+El diseño sigue una arquitectura modular y desacoplada mediante patrones de diseño orientados a objetos y **DataClasses**, separando estrictamente la capa de extracción de la capa de análisis, modelos y motores estocásticos.
 
 ### Estructura del repositorio
 
@@ -26,7 +26,9 @@ T1/
 ├── examples/
 │   ├── test_fetch.py                 # Extracción individual y batch (Yahoo)
 │   ├── test_fetch_fred.py            # Extracción macroeconómica (FRED)
-│   └── test_portfolio.py             # Creación y métricas de Cartera (Portfolio)
+│   ├── test_portfolio.py             # Creación y métricas de Cartera (Portfolio)
+│   ├── test_monte_carlo.py           # Motor Monte Carlo y generación de gráficos
+│   └── plots/                        # Gráficos generados de simulación
 ├── src/
 │   └── toolkit/
 │       ├── __init__.py               # Exportaciones de primer nivel
@@ -38,6 +40,7 @@ T1/
 │       ├── models/                   # Capa de modelado cuantitativo
 │       │   ├── series.py             # DataClass PriceSeries (series individuales)
 │       │   ├── portfolio.py          # DataClass Portfolio (agregación y riesgos)
+│       │   ├── monte_carlo.py        # Motor Monte Carlo y DataClass MonteCarloResult
 │       │   └── __init__.py
 │       └── utils/                    # Limpieza y utilidades auxiliares
 ├── pyproject.toml
@@ -63,6 +66,8 @@ Un `dataclass` interoperable que estandariza las series de cualquier fuente de d
 | `sharpe_ratio()` | `float` | Ratio de Sharpe anualizado |
 | `max_drawdown()` | `float` | Caída máxima histórica (*Peak-to-Trough*) |
 | `value_at_risk(0.95)` | `float` | VaR histórico diario al 95% de confianza |
+| `simulate_montecarlo()` | `MonteCarloResult` | Simulación estocástica de trayectorias (GBM) |
+| `plot_montecarlo()` | `Figure` | Genera y muestra visualmente las trayectorias y distribución |
 
 #### 2. `Portfolio` — Modelo de Cartera de Inversión (`models/portfolio.py`)
 
@@ -86,8 +91,20 @@ Un `dataclass` que agrega múltiples activos `PriceSeries`, gestiona sus pondera
 | `value_at_risk(0.95)` | `float` | Valor en Riesgo (VaR) diario al 95% (métodos `'historical'` y `'parametric'`) |
 | `conditional_value_at_risk()` | `float` | CVaR / Expected Shortfall diario al 95% |
 | `summary()` | `Dict[str, Any]` | Resumen exhaustivo de métricas y diagnóstico de la cartera |
+| `simulate_montecarlo()` | `MonteCarloResult` | Simulación estocástica (multivariante correlada o agregada) |
+| `plot_montecarlo()` | `Figure` | Visualización en pantalla de trayectorias y distribución terminal |
 
-#### 3. Extractores de datos (`data/`)
+#### 3. Motor de Simulación Monte Carlo (`models/monte_carlo.py`)
+
+- **`MonteCarloEngine`**: Motor estocástico con dos modelos de simulación:
+  1. *Movimiento Browniano Geométrico (GBM)* univariante para activos individuales o cartera global agregada.
+  2. *GBM Multivariante Correlado* para carteras con descomposición de Cholesky ($\boldsymbol{\Sigma} = \boldsymbol{L}\boldsymbol{L}^T$) sobre la matriz empírica de covarianzas.
+- **`MonteCarloResult`**: Objeto encapsulador con trayectorias ($S_t$), percentiles temporales ($5\%$, $50\%$, $95\%$), capital esperado, probabilidad de pérdida, VaR terminal y CVaR terminal monetarios.
+- **Visualización integrada**: Gráficos automáticos con dos paneles:
+  - Panel izquierdo: Cono de trayectorias con percentiles y línea base de capital inicial.
+  - Panel derecho: Histograma de densidad terminal a horizonte $T$ con corte de VaR 95% y zona sombreada de cola de pérdidas.
+
+#### 4. Extractores de datos (`data/`)
 
 - **`BaseDataExtractor`** (`data/base.py`): Interfaz abstracta que exige la implementación de `fetch_series()` y `fetch_batch()`.
 - **`YahooFinanceExtractor`** (`data/yahoo.py`): Conector a Yahoo Finance con soporte para descargas individuales o masivas en un solo request y normalización automática.
@@ -117,13 +134,13 @@ pip install -r requirements.txt
 
 ### Ejemplos de uso
 
-#### Ingesta de datos y creación de cartera equiponderada
+#### Ingesta de datos, Cartera y Simulación de Monte Carlo
 
 ```python
-from toolkit.data import YahooFinanceExtractor, FREDExtractor
+from toolkit.data import YahooFinanceExtractor
 from toolkit.models import Portfolio
 
-# 1. Descarga de acciones e índices
+# 1. Descarga de activos
 yahoo = YahooFinanceExtractor()
 assets = yahoo.fetch_batch(
     tickers=["AAPL", "MSFT", "SAN.MC", "^IBEX"],
@@ -131,32 +148,36 @@ assets = yahoo.fetch_batch(
     end="2025-01-01"
 )
 
-# 2. Creación de Cartera (pesos iguales por defecto: 1/N)
-portfolio = Portfolio(assets=assets, name="Cartera Global")
-print(portfolio)
+# 2. Creación de Cartera
+weights = {"AAPL": 0.35, "MSFT": 0.35, "SAN.MC": 0.15, "^IBEX": 0.15}
+portfolio = Portfolio(assets=assets, weights=weights, initial_capital=50000.0)
 
-# 3. Métricas automáticas
-print(f"Retorno diario medio: {portfolio.mean_return:.5f}")
+# 3. Métricas analíticas
+print(portfolio)
 print(f"Volatilidad anualizada: {portfolio.annualized_volatility():.2%}")
 print(f"Ratio de Sharpe: {portfolio.sharpe_ratio(risk_free_rate=0.03):.2f}")
-print(f"Max Drawdown: {portfolio.max_drawdown():.2%}")
-print(f"VaR (95%): {portfolio.value_at_risk(0.95):.2%}")
-```
 
-#### Cartera con ponderaciones personalizadas
+# 4. Simulación de Monte Carlo (2.500 trayectorias, 1 año = 252 días de negociación)
+mc_result = portfolio.simulate_montecarlo(
+    n_simulations=2500,
+    horizon=252,
+    multivariate=True,  # Difusión multivariante correlada
+    seed=42
+)
 
-```python
-custom_weights = {"AAPL": 0.40, "MSFT": 0.30, "SAN.MC": 0.15, "^IBEX": 0.15}
-portfolio = Portfolio(assets=assets, weights=custom_weights, name="Growth Portfolio")
+print(f"Capital terminal esperado: {mc_result.terminal_mean:,.2f}€ ({mc_result.summary()['expected_return']:+.2%})")
+print(f"Probabilidad de pérdida:   {mc_result.probability_of_loss:.2%}")
+print(f"VaR 95% terminal:          {mc_result.terminal_var(0.95):,.2f}€")
 
-# Matriz de correlación
-print(portfolio.correlation_matrix.round(3))
+# 5. Visualización gráfica
+mc_result.plot(save_path="examples/plots/mc_portfolio.png")
 ```
 
 Ejecuta los scripts de prueba completos:
 - `python examples/test_fetch.py`
 - `python examples/test_fetch_fred.py`
 - `python examples/test_portfolio.py`
+- `python examples/test_monte_carlo.py`
 
 ### Dependencias
 
@@ -164,8 +185,8 @@ Ejecuta los scripts de prueba completos:
 |---|---|---|
 | `yfinance` | ≥ 0.2.36 | Descarga de acciones e índices bursátiles |
 | `pandas` | ≥ 2.0.0 | Manipulación y alineación de series temporales |
-| `numpy` | ≥ 1.24.0 | Operaciones algebraicas y estadísticas vectorizadas |
-| `matplotlib` | ≥ 3.7.0 | Visualizaciones gráficas |
+| `numpy` | ≥ 1.24.0 | Operaciones algebraicas, Cholesky y simulación vectorizada |
+| `matplotlib` | ≥ 3.7.0 | Visualizaciones de conos estocásticos y distribuciones |
 | `pandas-datareader` | ≥ 0.10.0 | Conexión con la API de FRED (datos macroeconómicos) |
 
 ### Documentación
@@ -180,13 +201,13 @@ Las guías del taller se encuentran en [`doc/`](doc/):
 ## English
 
 > **Master MIAX BME · Edition 15**  
-> Block B1 · Workshop 1: Architecture, data extraction and portfolio modeling
+> Block B1 · Workshop 1: Architecture, data extraction, portfolio modeling and Monte Carlo simulation
 
 ### Overview
 
-This project implements a professional Python toolbox for fetching, standardizing, and analyzing financial and macroeconomic data, as well as quantitative investment portfolio modeling and management.
+This project implements a professional Python toolbox for fetching, standardizing, and analyzing financial and macroeconomic data, as well as quantitative investment portfolio modeling and **Monte Carlo** stochastic simulation.
 
-The architecture emphasizes clean object-oriented design and **DataClasses**, cleanly decoupling the data ingestion layer from analytical models.
+The architecture emphasizes clean object-oriented design and **DataClasses**, cleanly decoupling the data ingestion layer from analytical models and stochastic diffusion engines.
 
 ### Repository Structure
 
@@ -199,7 +220,9 @@ T1/
 ├── examples/
 │   ├── test_fetch.py                 # Single & batch fetch (Yahoo)
 │   ├── test_fetch_fred.py            # Macro data extraction (FRED)
-│   └── test_portfolio.py             # Portfolio creation & risk metrics
+│   ├── test_portfolio.py             # Portfolio creation & risk metrics
+│   ├── test_monte_carlo.py           # Monte Carlo engine & plot generation
+│   └── plots/                        # Exported simulation charts
 ├── src/
 │   └── toolkit/
 │       ├── __init__.py               # Top-level exports
@@ -211,6 +234,7 @@ T1/
 │       ├── models/                   # Quantitative modeling layer
 │       │   ├── series.py             # PriceSeries DataClass (single series)
 │       │   ├── portfolio.py          # Portfolio DataClass (aggregation & risk)
+│       │   ├── monte_carlo.py        # Monte Carlo engine & MonteCarloResult DataClass
 │       │   └── __init__.py
 │       └── utils/                    # Data cleaning & helpers
 ├── pyproject.toml
@@ -236,6 +260,8 @@ A standardized `dataclass` modeling price series from any source:
 | `sharpe_ratio()` | `float` | Annualized Sharpe ratio |
 | `max_drawdown()` | `float` | Maximum peak-to-trough drawdown |
 | `value_at_risk(0.95)` | `float` | Daily historical 95% Value at Risk |
+| `simulate_montecarlo()` | `MonteCarloResult` | Stochastic trajectory simulation (GBM) |
+| `plot_montecarlo()` | `Figure` | Trajectory and terminal distribution visualization |
 
 #### 2. `Portfolio` — Investment Portfolio Model (`models/portfolio.py`)
 
@@ -259,8 +285,18 @@ A `dataclass` aggregating multiple `PriceSeries` assets, managing weights, and a
 | `value_at_risk(0.95)` | `float` | Daily 95% Value at Risk (`'historical'` and `'parametric'`) |
 | `conditional_value_at_risk()` | `float` | Daily 95% CVaR / Expected Shortfall |
 | `summary()` | `Dict[str, Any]` | Comprehensive portfolio metric summary |
+| `simulate_montecarlo()` | `MonteCarloResult` | Stochastic simulation (multivariate correlated or aggregate) |
+| `plot_montecarlo()` | `Figure` | Screen rendering of trajectories and terminal distribution |
 
-#### 3. Data Extractors (`data/`)
+#### 3. Monte Carlo Simulation Engine (`models/monte_carlo.py`)
+
+- **`MonteCarloEngine`**: Stochastic simulation engine featuring:
+  1. *Geometric Brownian Motion (GBM)* for single assets or aggregate portfolio drift/volatility.
+  2. *Correlated Multivariate GBM* utilizing Cholesky decomposition of the empirical asset covariance matrix ($\boldsymbol{\Sigma} = \boldsymbol{L}\boldsymbol{L}^T$).
+- **`MonteCarloResult`**: Container class storing full path trajectories ($S_t$), percentiles ($5\%$, $50\%$, $95\%$), expected capital, probability of loss, monetary terminal VaR, and terminal CVaR.
+- **Built-in Visualizations**: Dual-panel output with sample paths, percentile envelopes, initial capital baseline, terminal histogram, and VaR tail shading.
+
+#### 4. Data Extractors (`data/`)
 
 - **`BaseDataExtractor`** (`data/base.py`): Abstract interface defining `fetch_series()` and `fetch_batch()`.
 - **`YahooFinanceExtractor`** (`data/yahoo.py`): Fetches equities and indices in single or batch queries.
@@ -284,20 +320,25 @@ from toolkit.models import Portfolio
 yahoo = YahooFinanceExtractor()
 assets = yahoo.fetch_batch(["AAPL", "MSFT", "SAN.MC"], start="2024-01-01", end="2025-01-01")
 
-# Create Portfolio with custom weights
+# Create Portfolio
 weights = {"AAPL": 0.50, "MSFT": 0.30, "SAN.MC": 0.20}
-portfolio = Portfolio(assets=assets, weights=weights, name="Tech & Banking")
+portfolio = Portfolio(assets=assets, weights=weights, initial_capital=25000.0)
 
-print(portfolio)
-print(f"Sharpe Ratio: {portfolio.sharpe_ratio(risk_free_rate=0.03):.2f}")
-print(f"Max Drawdown: {portfolio.max_drawdown():.2%}")
-print(f"95% VaR: {portfolio.value_at_risk(0.95):.2%}")
+# Run Monte Carlo simulation (1,500 paths, 1 year forward)
+mc = portfolio.simulate_montecarlo(n_simulations=1500, horizon=252, multivariate=True)
+print(f"Expected Terminal Wealth: {mc.terminal_mean:,.2f}€")
+print(f"Probability of Loss:      {mc.probability_of_loss:.2%}")
+print(f"95% Terminal VaR:         {mc.terminal_var(0.95):,.2f}€")
+
+# Plot trajectories and terminal distribution
+mc.plot(save_path="examples/plots/mc_portfolio.png")
 ```
 
 Run test examples:
 - `python examples/test_fetch.py`
 - `python examples/test_fetch_fred.py`
 - `python examples/test_portfolio.py`
+- `python examples/test_monte_carlo.py`
 
 ### Dependencies
 
@@ -305,8 +346,8 @@ Run test examples:
 |---|---|---|
 | `yfinance` | ≥ 0.2.36 | Equity and index price data |
 | `pandas` | ≥ 2.0.0 | Time series alignment and data manipulation |
-| `numpy` | ≥ 1.24.0 | Vectorized algebra and statistical computations |
-| `matplotlib` | ≥ 3.7.0 | Plotting and reporting |
+| `numpy` | ≥ 1.24.0 | Vectorized algebra, Cholesky decomposition, and simulations |
+| `matplotlib` | ≥ 3.7.0 | Plotting trajectories and probability distributions |
 | `pandas-datareader` | ≥ 0.10.0 | FRED macroeconomic API client |
 
 ### Documentation
