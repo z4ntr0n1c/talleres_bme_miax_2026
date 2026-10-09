@@ -19,8 +19,9 @@ El diseño sigue una arquitectura modular y desacoplada mediante patrones de dis
 
 ```
 T1/
-├── doc/                              # Guías y diapositivas del taller (PDF/HTML)
+├── doc/                              # Guías, arquitectura y diapositivas del taller
 │   ├── Taller_B1_T1.pdf
+│   ├── architecture.md               # Especificación y diagramas formales UML
 │   ├── guia_taller_parte1_git_ssh.*  # Parte 1: Configuración Git & SSH
 │   └── guia_taller_parte2.*          # Parte 2: Arquitectura y extracción
 ├── examples/
@@ -52,6 +53,128 @@ T1/
 ├── requirements.txt
 └── setup.py
 ```
+
+### Arquitectura del Sistema y Diagramas (Requisito 4.6)
+
+#### Diagrama de Clases UML y Jerarquía de Dependencias
+
+```mermaid
+classDiagram
+    direction TB
+
+    class BaseDataExtractor {
+        <<abstract>>
+        +fetch_series(ticker, start, end, asset_type) PriceSeries*
+        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]*
+        #_standardize_dataframe(df) DataFrame*
+    }
+
+    class YahooFinanceExtractor {
+        +fetch_series(ticker, start, end, asset_type) PriceSeries
+        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
+        #_standardize_dataframe(df) DataFrame
+    }
+
+    class FREDExtractor {
+        +fetch_series(ticker, start, end, asset_type) PriceSeries
+        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
+        #_standardize_dataframe(df, ticker) DataFrame
+    }
+
+    class PriceSeries {
+        <<dataclass>>
+        +str ticker
+        +str asset_type
+        +DataFrame data
+        +float mean_return
+        +float std_return
+        +annualized_return() float
+        +annualized_volatility() float
+        +sharpe_ratio(rf) float
+        +max_drawdown() float
+        +value_at_risk(conf) float
+        +simulate_montecarlo() MonteCarloResult
+        +plot_montecarlo() Figure
+    }
+
+    class Portfolio {
+        <<dataclass>>
+        +List~PriceSeries~ assets
+        +Union~Dict,List,None~ weights
+        +float initial_capital
+        +Dict~str,float~ weights_dict
+        +DataFrame returns_df
+        +Series portfolio_returns
+        +DataFrame covariance_matrix
+        +DataFrame correlation_matrix
+        +annualized_return() float
+        +annualized_volatility() float
+        +sharpe_ratio(rf) float
+        +max_drawdown() float
+        +value_at_risk(conf, method) float
+        +conditional_value_at_risk(conf) float
+        +simulate_montecarlo() MonteCarloResult
+        +plot_montecarlo() Figure
+        +report(rf, conf, output_path) str
+        +plots_report(figsize, save_path) Figure
+    }
+
+    class MonteCarloEngine {
+        <<service>>
+        +simulate_gbm() MonteCarloResult$
+        +simulate_multivariate_gbm() MonteCarloResult$
+    }
+
+    class MonteCarloResult {
+        <<dataclass>>
+        +ndarray trajectories
+        +float terminal_mean
+        +float terminal_var
+        +float terminal_cvar
+        +float probability_of_loss
+        +plot() Figure
+    }
+
+    class ValidationUtils {
+        <<utility>>
+        +validate_price_dataframe(df) bool$
+        +validate_portfolio_weights(weights, tickers) Dict$
+    }
+
+    class CleaningUtils {
+        <<utility>>
+        +clean_missing_values(df, method) DataFrame$
+        +align_calendar_series(series_map, method) DataFrame$
+    }
+
+    BaseDataExtractor <|-- YahooFinanceExtractor : implements
+    BaseDataExtractor <|-- FREDExtractor : implements
+    BaseDataExtractor ..> PriceSeries : creates
+    Portfolio o-- "1..*" PriceSeries : aggregates
+    Portfolio ..> ValidationUtils : validates
+    Portfolio ..> CleaningUtils : aligns
+    Portfolio ..> MonteCarloEngine : delegates
+    PriceSeries ..> MonteCarloEngine : delegates
+    MonteCarloEngine ..> MonteCarloResult : produces
+```
+
+#### Diagrama de Flujo de Datos
+
+```mermaid
+flowchart LR
+    A[Market APIs<br>Yahoo / FRED] --> B[Extractors<br>BaseDataExtractor]
+    B --> C[PriceSeries<br>DataClass]
+    C --> D[Validation & Cleaning<br>utils layer]
+    D --> E[Portfolio<br>Aggregation]
+    E --> F[MonteCarloEngine<br>GBM / Cholesky]
+    F --> G[MonteCarloResult<br>Cones & Stats]
+    E --> H[Portfolio.report<br>Markdown Report]
+    E --> I[Portfolio.plots_report<br>2x2 Dashboard]
+```
+
+Consulte el documento extendido de diseño en [`doc/architecture.md`](doc/architecture.md).
+
+---
 
 ### Componentes principales
 
@@ -201,6 +324,7 @@ Ejecuta los scripts de prueba completos:
 ### Documentación
 
 Las guías del taller se encuentran en [`doc/`](doc/):
+- **Arquitectura y UML** — [`doc/architecture.md`](doc/architecture.md)
 - **Parte 1** — Configuración de Git y SSH (`guia_taller_parte1_git_ssh.pdf`)
 - **Parte 2** — Arquitectura y extracción de datos (`guia_taller_parte2.pdf`)
 - **Diapositivas** — `Taller_B1_T1.pdf`
@@ -222,8 +346,9 @@ The architecture emphasizes clean object-oriented design and **DataClasses**, cl
 
 ```
 T1/
-├── doc/                              # Workshop guides & slides (PDF/HTML)
+├── doc/                              # Workshop guides, architecture & slides
 │   ├── Taller_B1_T1.pdf
+│   ├── architecture.md               # Formal architecture specification & UML
 │   ├── guia_taller_parte1_git_ssh.*  # Part 1: Git & SSH setup
 │   └── guia_taller_parte2.*          # Part 2: Architecture & extraction
 ├── examples/
@@ -255,6 +380,126 @@ T1/
 ├── requirements.txt
 └── setup.py
 ```
+
+### System Architecture & Diagrams (Requirement 4.6)
+
+#### UML Class Diagram & Dependencies
+
+```mermaid
+classDiagram
+    direction TB
+
+    class BaseDataExtractor {
+        <<abstract>>
+        +fetch_series(ticker, start, end, asset_type) PriceSeries*
+        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]*
+        #_standardize_dataframe(df) DataFrame*
+    }
+
+    class YahooFinanceExtractor {
+        +fetch_series(ticker, start, end, asset_type) PriceSeries
+        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
+    }
+
+    class FREDExtractor {
+        +fetch_series(ticker, start, end, asset_type) PriceSeries
+        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
+    }
+
+    class PriceSeries {
+        <<dataclass>>
+        +str ticker
+        +str asset_type
+        +DataFrame data
+        +float mean_return
+        +float std_return
+        +annualized_return() float
+        +annualized_volatility() float
+        +sharpe_ratio(rf) float
+        +max_drawdown() float
+        +value_at_risk(conf) float
+        +simulate_montecarlo() MonteCarloResult
+        +plot_montecarlo() Figure
+    }
+
+    class Portfolio {
+        <<dataclass>>
+        +List~PriceSeries~ assets
+        +Union~Dict,List,None~ weights
+        +float initial_capital
+        +Dict~str,float~ weights_dict
+        +DataFrame returns_df
+        +Series portfolio_returns
+        +DataFrame covariance_matrix
+        +DataFrame correlation_matrix
+        +annualized_return() float
+        +annualized_volatility() float
+        +sharpe_ratio(rf) float
+        +max_drawdown() float
+        +value_at_risk(conf, method) float
+        +conditional_value_at_risk(conf) float
+        +simulate_montecarlo() MonteCarloResult
+        +plot_montecarlo() Figure
+        +report(rf, conf, output_path) str
+        +plots_report(figsize, save_path) Figure
+    }
+
+    class MonteCarloEngine {
+        <<service>>
+        +simulate_gbm() MonteCarloResult$
+        +simulate_multivariate_gbm() MonteCarloResult$
+    }
+
+    class MonteCarloResult {
+        <<dataclass>>
+        +ndarray trajectories
+        +float terminal_mean
+        +float terminal_var
+        +float terminal_cvar
+        +float probability_of_loss
+        +plot() Figure
+    }
+
+    class ValidationUtils {
+        <<utility>>
+        +validate_price_dataframe(df) bool$
+        +validate_portfolio_weights(weights, tickers) Dict$
+    }
+
+    class CleaningUtils {
+        <<utility>>
+        +clean_missing_values(df, method) DataFrame$
+        +align_calendar_series(series_map, method) DataFrame$
+    }
+
+    BaseDataExtractor <|-- YahooFinanceExtractor : implements
+    BaseDataExtractor <|-- FREDExtractor : implements
+    BaseDataExtractor ..> PriceSeries : creates
+    Portfolio o-- "1..*" PriceSeries : aggregates
+    Portfolio ..> ValidationUtils : validates
+    Portfolio ..> CleaningUtils : aligns
+    Portfolio ..> MonteCarloEngine : delegates
+    PriceSeries ..> MonteCarloEngine : delegates
+    MonteCarloEngine ..> MonteCarloResult : produces
+```
+
+#### Layered Data Flow Diagram
+
+```mermaid
+flowchart LR
+    A[Market APIs<br>Yahoo / FRED] --> B[Extractors<br>BaseDataExtractor]
+    B --> C[PriceSeries<br>DataClass]
+    C --> D[Validation & Cleaning<br>utils layer]
+    D --> E[Portfolio<br>Aggregation]
+    E --> F[MonteCarloEngine<br>GBM / Cholesky]
+    F --> G[MonteCarloResult<br>Cones & Stats]
+    E --> H[Portfolio.report<br>Markdown Report]
+    E --> I[Portfolio.plots_report<br>2x2 Dashboard]
+```
+
+See the extended architecture document in [`doc/architecture.md`](doc/architecture.md).
+
+---
 
 ### Key Components
 
@@ -368,6 +613,7 @@ Run test examples:
 ### Documentation
 
 Workshop guides available in [`doc/`](doc/):
+- **Architecture & UML** — [`doc/architecture.md`](doc/architecture.md)
 - **Part 1** — Git & SSH setup (`guia_taller_parte1_git_ssh.pdf`)
 - **Part 2** — Architecture & data extraction (`guia_taller_parte2.pdf`)
 - **Slides** — `Taller_B1_T1.pdf`
