@@ -323,11 +323,14 @@ Ejecuta los scripts de prueba completos:
 
 ### Documentación
 
-Las guías del taller se encuentran en [`doc/`](doc/):
-- **Arquitectura y UML** — [`doc/architecture.md`](doc/architecture.md)
-- **Parte 1** — Configuración de Git y SSH (`guia_taller_parte1_git_ssh.pdf`)
-- **Parte 2** — Arquitectura y extracción de datos (`guia_taller_parte2.pdf`)
-- **Diapositivas** — `Taller_B1_T1.pdf`
+Las guías del taller se encuentran disponibles en formato HTML y PDF en [`doc/`](doc/):
+- **Arquitectura y Especificación UML** — [`doc/architecture.md`](doc/architecture.md)
+- **Parte 1 — Git y Configuración SSH** (`guia_taller_parte1_git_ssh.pdf` · [`HTML`](doc/guia_taller_parte1_git_ssh.html))
+- **Parte 2 — Arquitectura, Entorno y Extractor** (`guia_taller_parte2.pdf` · [`HTML`](doc/guia_taller_parte2.html))
+- **Parte 3 — Modelado Cuantitativo y Gestión de Carteras** (`guia_taller_parte3_modelado_cartera.pdf` · [`HTML`](doc/guia_taller_parte3_modelado_cartera.html))
+- **Parte 4 — Motor Estocástico de Monte Carlo y Difusión** (`guia_taller_parte4_monte_carlo.pdf` · [`HTML`](doc/guia_taller_parte4_monte_carlo.html))
+- **Parte 5 — Preprocesado, Validación, Reportes y Cuadro de Mando** (`guia_taller_parte5_limpieza_reportes.pdf` · [`HTML`](doc/guia_taller_parte5_limpieza_reportes.html))
+- **Diapositivas y Enunciado Oficial** — `Taller_B1_T1.pdf`
 
 ---
 
@@ -612,8 +615,11 @@ Run test examples:
 
 ### Documentation
 
-Workshop guides available in [`doc/`](doc/):
-- **Architecture & UML** — [`doc/architecture.md`](doc/architecture.md)
-- **Part 1** — Git & SSH setup (`guia_taller_parte1_git_ssh.pdf`)
-- **Part 2** — Architecture & data extraction (`guia_taller_parte2.pdf`)
-- **Slides** — `Taller_B1_T1.pdf`
+Workshop guides are available in both HTML and PDF formats in [`doc/`](doc/):
+- **Architecture & Formal UML Specification** — [`doc/architecture.md`](doc/architecture.md)
+- **Part 1 — Git & SSH Configuration** (`guia_taller_parte1_git_ssh.pdf` · [`HTML`](doc/guia_taller_parte1_git_ssh.html))
+- **Part 2 — Architecture, Environment & Extractor** (`guia_taller_parte2.pdf` · [`HTML`](doc/guia_taller_parte2.html))
+- **Part 3 — Quantitative Modeling & Portfolio Management** (`guia_taller_parte3_modelado_cartera.pdf` · [`HTML`](doc/guia_taller_parte3_modelado_cartera.html))
+- **Part 4 — Monte Carlo Stochastic Diffusion Engine** (`guia_taller_parte4_monte_carlo.pdf` · [`HTML`](doc/guia_taller_parte4_monte_carlo.html))
+- **Part 5 — Preprocessing, Validation, Reporting & Dashboard** (`guia_taller_parte5_limpieza_reportes.pdf` · [`HTML`](doc/guia_taller_parte5_limpieza_reportes.html))
+- **Workshop Slides & Assignment Specification** — `Taller_B1_T1.pdf`

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Taller B1-T1: Modelado Cuantitativo y Gestión de Carteras</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 14mm 16mm;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1f2937;
+      line-height: 1.42;
+      font-size: 10.5pt;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      font-size: 17pt;
+      margin: 0 0 4px 0;
+      color: #111827;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 5px;
+    }
+    .subtitle {
+      font-size: 9pt;
+      color: #4b5563;
+      margin-bottom: 14px;
+    }
+    h2 {
+      font-size: 12pt;
+      color: #1e40af;
+      margin: 12px 0 5px 0;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 3px;
+    }
+    p, ul, ol {
+      margin: 4px 0 6px 0;
+    }
+    ul, ol {
+      padding-left: 18px;
+    }
+    li {
+      margin-bottom: 3px;
+    }
+    code {
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 9pt;
+      background-color: #f3f4f6;
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #1f2937;
+    }
+    pre {
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 8.8pt;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 7px 10px;
+      margin: 5px 0 8px 0;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .terminal-box {
+      background-color: #18181b;
+      color: #f4f4f5;
+      border-radius: 6px;
+      border: 1px solid #27272a;
+      padding: 8px 12px;
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 8.5pt;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 6px 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .term-env { color: #4ade80; font-weight: 600; }
+    .term-user { color: #38bdf8; font-weight: bold; }
+    .term-path { color: #818cf8; }
+    .term-out { color: #e4e4e7; }
+    .term-cmd { color: #38bdf8; font-weight: 600; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 10px 0;
+      font-size: 9pt;
+    }
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 4px 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f3f4f6;
+      color: #1e40af;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Taller B1-T1: Modelado Cuantitativo y Gestión de Carteras</h1>
+  <div class="subtitle">MIAX - BME | Agregación Multiactivo, DataClass Portfolio y Métricas de Riesgo en __post_init__</div>
+
+  <h2>1. Fundamentos Arquitectónicos: DataClass Portfolio</h2>
+  <p>La clase <code>Portfolio</code> (en <code>src/toolkit/models/portfolio.py</code>) encapsula la agregación de múltiples activos <code>PriceSeries</code>, gestionando de forma flexible sus ponderaciones:</p>
+  <ul>
+    <li><strong>Equiponderación automática</strong>: Asigna $w_i = 1/N$ cuando no se proporcionan pesos explícitos.</li>
+    <li><strong>Asignación por diccionario</strong>: Mapeo explícito <code>{"AAPL": 0.35, "MSFT": 0.35, ...}</code>, verificando la correspondencia con los activos y normalizando la suma a $1.0$.</li>
+    <li><strong>Sincronización multicalendario</strong>: Alineación temporal por fechas comunes entre mercados con distintos calendarios bursátiles (p. ej., Wall Street vs. Bolsa de Madrid).</li>
+  </ul>
+
+  <h2>2. Cálculo Automático de Métricas en <code>__post_init__</code></h2>
+  <p>Al instanciar la cartera, se computan de forma determinista y vectorizada los estadísticos fundamentales:</p>
+  <pre><code># Retorno diario ponderado: R_p = sum(w_i * R_i)
+self.portfolio_returns = (self.returns_df * self.weights_vector).sum(axis=1)
+
+# Estadísticos automáticos
+self.mean_return = float(self.portfolio_returns.mean())
+self.std_return = float(self.portfolio_returns.std())
+self.covariance_matrix = self.returns_df.cov()
+self.correlation_matrix = self.returns_df.corr()</code></pre>
+
+  <h2>3. Métodos Analíticos y Diagnósticos de Riesgo</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Método</th>
+        <th>Fórmula / Descripción</th>
+        <th>Interpretación</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>annualized_return()</code></td>
+        <td>$(1 + \mu)^{252} - 1$</td>
+        <td>Tasa geométrica anualizada compuesta</td>
+      </tr>
+      <tr>
+        <td><code>annualized_volatility()</code></td>
+        <td>$\sigma_{\text{diaria}} \times \sqrt{252}$</td>
+        <td>Dispersión anualizada del rendimiento</td>
+      </tr>
+      <tr>
+        <td><code>sharpe_ratio(rf)</code></td>
+        <td>$(\mu_{\text{anual}} - R_f) / \sigma_{\text{anual}}$</td>
+        <td>Exceso de retorno por unidad de volatilidad</td>
+      </tr>
+      <tr>
+        <td><code>max_drawdown()</code></td>
+        <td>$\min \left( \frac{W_t - \max_{s \le t} W_s}{\max_{s \le t} W_s} \right)$</td>
+        <td>Máxima caída acumulada desde máximos históricos</td>
+      </tr>
+      <tr>
+        <td><code>value_at_risk(0.95)</code></td>
+        <td>Quantil histórico o analítico gaussiano ($z = -1.645$)</td>
+        <td>Pérdida máxima diaria esperada al 95% de confianza</td>
+      </tr>
+      <tr>
+        <td><code>conditional_value_at_risk(0.95)</code></td>
+        <td>$\mathbb{E}[R_p \mid R_p \le \text{VaR}_{0.95}]$</td>
+        <td>CVaR / Expected Shortfall (pérdida media en la cola)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Verificación y Ejecución de Pruebas</h2>
+  <p>Ejecución del script de validación <code>examples/test_portfolio.py</code> con activos de EE.UU. e IBEX 35:</p>
+
+  <div class="terminal-box"><span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$ python examples/test_portfolio.py
+<span class="term-out">======================================================================
+TESTING PORTFOLIO DATACLASS MODELING (REQUIREMENT 4.3)
+======================================================================
+
+1. Downloading historical series for: ['AAPL', 'MSFT', 'SAN.MC', '^IBEX'] ...
+   - AAPL     | Days: 252  | Mean: +0.00131 | Std: 0.01412 | Ann.Vol: 22.42%
+   - MSFT     | Days: 252  | Mean: +0.00062 | Std: 0.01257 | Ann.Vol: 19.95%
+   - SAN.MC   | Days: 256  | Mean: +0.00087 | Std: 0.01606 | Ann.Vol: 25.49%
+   - ^IBEX    | Days: 256  | Mean: +0.00054 | Std: 0.00834 | Ann.Vol: 13.24%
+
+2. Initializing Portfolio with EQUAL WEIGHTS (None -> 1/N)...
+   Result: Portfolio(name='Equal-Weighted Global Portfolio', assets=4, weights={AAPL: 25.0%, MSFT: 25.0%, SAN.MC: 25.0%, ^IBEX: 25.0%}, mean=0.00081, std=0.00831, sharpe=1.71)
+   Overlapping trading days: 248
+
+3. Initializing Portfolio with CUSTOM WEIGHTS (dict)...
+   Result: Portfolio(name='Tactical Growth Portfolio', assets=4, weights={AAPL: 35.0%, MSFT: 35.0%, SAN.MC: 15.0%, ^IBEX: 15.0%}, mean=0.00087, std=0.00887, sharpe=1.73)
+
+4. Asset Correlation Matrix:
+          AAPL    MSFT  SAN.MC   ^IBEX
+AAPL    1.0000  0.4772 -0.0082  0.0433
+MSFT    0.4772  1.0000  0.0005  0.0736
+SAN.MC -0.0082  0.0005  1.0000  0.8045
+^IBEX   0.0433  0.0736  0.8045  1.0000
+
+5. Portfolio Summary & Risk Diagnostics:
+   - annualized_return        : +0.2440 (+24.40%)
+   - annualized_volatility    : +0.1407 (+14.07%)
+   - sharpe_ratio             : 1.5208 (Rf=3.0%)
+   - max_drawdown             : -0.1150 (-11.50%)
+   - historical_var_95        : -0.0140 (-1.40%)
+   - cvar_95                  : -0.0207 (-2.07%)</span>
+<span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$</div>
+
+</body>
+</html>
+
