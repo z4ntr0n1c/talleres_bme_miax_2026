@@ -148,13 +148,20 @@ TESTING MONTE CARLO SIMULATION ENGINE (REQUIREMENT 4.4)
 1. Fetching historical data for ['AAPL', 'MSFT', 'SAN.MC', '^IBEX'] ...
 
 2. Running Monte Carlo on Individual Asset: AAPL
-   Simulated Paths: 2,000 | Horizon: 252 trading days | Initial Price: $248.62
-   Terminal Mean:   $345.93 (+39.14%) | Median: $334.73
-   Prob. of Loss:   9.30% | 95% Term. VaR: $16.51 | 95% Term. CVaR: $35.38
-   Saved plot to: examples/plots/mc_aapl.png
+   Historical Daily Mean: +0.00131 | Daily Std: 0.01412
+   Simulated Paths: 2,000 | Horizon: 252 trading days
+   Initial Price:   $248.62
+   Terminal Mean:   $345.93 (+39.14%)
+   Terminal Median: $334.73
+   Prob. of Loss:   9.30%
+   95% Term. VaR:   $16.51
+   95% Term. CVaR:  $35.38
+findfont: Failed to find font weight semibold for DejaVu Sans, now using 700.
+   Saved plot to: /home/sergio/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1/examples/plots/mc_aapl.png
 
 3. Building Portfolio and Running Correlated Monte Carlo Simulation...
-   Portfolio: Global Balanced Portfolio (Capital: 50,000€, weights: AAPL: 35%, MSFT: 35%, SAN: 15%, IBEX: 15%)
+   Portfolio: Global Balanced Portfolio (Capital: 50,000€)
+   Weights: {'AAPL': 0.35, 'MSFT': 0.35, 'SAN.MC': 0.15, '^IBEX': 0.15}
 
    [Method A] Correlated Multivariate GBM (Cholesky decomposition):
    - Expected Capital:     63,219.45€ (+26.44%)
@@ -164,11 +171,17 @@ TESTING MONTE CARLO SIMULATION ENGINE (REQUIREMENT 4.4)
    - Probability of Loss:  6.12%
    - 95% Terminal VaR:     747.47€
    - 95% Terminal CVaR:    3,328.37€
-   Saved plot to: examples/plots/mc_portfolio_multivariate.png
+   Saved plot to: /home/sergio/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1/examples/plots/mc_portfolio_multivariate.png
 
    [Method B] Aggregate Portfolio GBM:
-   - Expected Capital:     62,192.27€ | Prob. Loss: 6.48%
-   Saved plot to: examples/plots/mc_portfolio_aggregate.png</span>
+   - Expected Capital:     62,192.26€
+   - Median Capital:       61,375.60€
+   - Probability of Loss:  6.48%
+   Saved plot to: /home/sergio/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1/examples/plots/mc_portfolio_aggregate.png
+
+===========================================================================
+ALL 4.4 MONTE CARLO TESTS PASSED AND CHARTS GENERATED!
+===========================================================================</span>
 <span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$</div>
 
 </body>
