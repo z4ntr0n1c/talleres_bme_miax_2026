@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Taller B1-T1: Motor Estocástico de Monte Carlo y Difusión Cuantitativa</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 14mm 16mm;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1f2937;
+      line-height: 1.42;
+      font-size: 10.5pt;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      font-size: 17pt;
+      margin: 0 0 4px 0;
+      color: #111827;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 5px;
+    }
+    .subtitle {
+      font-size: 9pt;
+      color: #4b5563;
+      margin-bottom: 14px;
+    }
+    h2 {
+      font-size: 12pt;
+      color: #1e40af;
+      margin: 12px 0 5px 0;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 3px;
+    }
+    p, ul, ol {
+      margin: 4px 0 6px 0;
+    }
+    ul, ol {
+      padding-left: 18px;
+    }
+    li {
+      margin-bottom: 3px;
+    }
+    code {
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 9pt;
+      background-color: #f3f4f6;
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #1f2937;
+    }
+    pre {
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 8.8pt;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 7px 10px;
+      margin: 5px 0 8px 0;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .terminal-box {
+      background-color: #18181b;
+      color: #f4f4f5;
+      border-radius: 6px;
+      border: 1px solid #27272a;
+      padding: 8px 12px;
+      font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 8.5pt;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 6px 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .term-env { color: #4ade80; font-weight: 600; }
+    .term-user { color: #38bdf8; font-weight: bold; }
+    .term-path { color: #818cf8; }
+    .term-out { color: #e4e4e7; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 10px 0;
+      font-size: 9pt;
+    }
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 4px 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f3f4f6;
+      color: #1e40af;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Taller B1-T1: Motor Estocástico de Monte Carlo y Difusión Cuantitativa</h1>
+  <div class="subtitle">MIAX - BME | Modelado GBM, Descomposición de Cholesky y Simulación de Trayectorias de Cartera</div>
+
+  <h2>1. Formulación Matemática de la Difusión Estocástica</h2>
+  <p>El motor implementa dos modelos analíticos de difusión para proyectar precios y riqueza a horizonte $T$:</p>
+  <ul>
+    <li><strong>Movimiento Browniano Geométrico (GBM Univariante)</strong>:
+      $$S_{t+1} = S_t \exp\left( \left(\mu - \frac{1}{2}\sigma^2\right) \Delta t + \sigma \sqrt{\Delta t} Z \right), \quad Z \sim \mathcal{N}(0, 1)$$
+    </li>
+    <li><strong>GBM Multivariante Correlado (Descomposición de Cholesky)</strong>:
+      Para carteras de $N$ activos con matriz de covarianzas $\boldsymbol{\Sigma}$, se calcula el factor triangular inferior $\boldsymbol{L}$ tal que $\boldsymbol{\Sigma} = \boldsymbol{L}\boldsymbol{L}^T$. Los choques correlados se obtienen como $\boldsymbol{Z}_{\text{corr}} = \boldsymbol{L} \boldsymbol{Z}$, preservando la estructura empírica de dependencias cruzadas.
+    </li>
+  </ul>
+
+  <h2>2. Arquitectura: <code>MonteCarloEngine</code> y <code>MonteCarloResult</code></h2>
+  <p>En <code>src/toolkit/models/monte_carlo.py</code>, la simulación se ejecuta de manera totalmente vectorizada sobre NumPy:</p>
+  <pre><code># Generación vectorizada de trayectorias (horizonte x simulaciones)
+shocks = rng.standard_normal(size=(horizon, n_simulations))
+daily_log_returns = drift + diffusion * shocks
+cum_log_returns = np.vstack([np.zeros((1, n_simulations)), np.cumsum(daily_log_returns, axis=0)])
+trajectories = initial_value * np.exp(cum_log_returns)</code></pre>
+  <p>La DataClass <code>MonteCarloResult</code> almacena las trayectorias y calcula automáticamente métricas de riesgo terminal:</p>
+  <ul>
+    <li><code>terminal_mean</code> y <code>terminal_median</code>: Capital esperado y mediano a vencimiento.</li>
+    <li><code>probability_of_loss</code>: Fracción de trayectorias donde el capital final es inferior al inicial ($S_T < S_0$).</li>
+    <li><code>terminal_var(0.95)</code> y <code>terminal_cvar(0.95)</code>: Cota de pérdida máxima y pérdida media en la cola en unidades monetarias.</li>
+  </ul>
+
+  <h2>3. Integración en Cartera y Visualización Gráfica</h2>
+  <p>El motor se integra directamente en <code>Portfolio</code> y <code>PriceSeries</code> mediante los métodos:</p>
+  <pre><code># Simulación directa en la cartera
+mc_result = portfolio.simulate_montecarlo(n_simulations=2500, horizon=252, multivariate=True)
+
+# Visualización automática en pantalla (cono estocástico + histograma de densidad con VaR)
+mc_result.plot(save_path="examples/plots/mc_portfolio.png")</code></pre>
+
+  <h2>4. Verificación y Resultados de Ejecución</h2>
+  <p>Ejecución de <code>examples/test_monte_carlo.py</code> simulando un activo individual (AAPL) y una cartera balanceada de 50.000 €:</p>
+
+  <div class="terminal-box"><span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$ python examples/test_monte_carlo.py
+<span class="term-out">===========================================================================
+TESTING MONTE CARLO SIMULATION ENGINE (REQUIREMENT 4.4)
+===========================================================================
+
+1. Fetching historical data for ['AAPL', 'MSFT', 'SAN.MC', '^IBEX'] ...
+
+2. Running Monte Carlo on Individual Asset: AAPL
+   Simulated Paths: 2,000 | Horizon: 252 trading days | Initial Price: $248.62
+   Terminal Mean:   $345.93 (+39.14%) | Median: $334.73
+   Prob. of Loss:   9.30% | 95% Term. VaR: $16.51 | 95% Term. CVaR: $35.38
+   Saved plot to: examples/plots/mc_aapl.png
+
+3. Building Portfolio and Running Correlated Monte Carlo Simulation...
+   Portfolio: Global Balanced Portfolio (Capital: 50,000€, weights: AAPL: 35%, MSFT: 35%, SAN: 15%, IBEX: 15%)
+
+   [Method A] Correlated Multivariate GBM (Cholesky decomposition):
+   - Expected Capital:     63,219.45€ (+26.44%)
+   - Median Capital:       62,282.34€
+   - 5th Percentile (p05): 49,252.53€
+   - 95th Percentile(p95): 79,658.81€
+   - Probability of Loss:  6.12%
+   - 95% Terminal VaR:     747.47€
+   - 95% Terminal CVaR:    3,328.37€
+   Saved plot to: examples/plots/mc_portfolio_multivariate.png
+
+   [Method B] Aggregate Portfolio GBM:
+   - Expected Capital:     62,192.27€ | Prob. Loss: 6.48%
+   Saved plot to: examples/plots/mc_portfolio_aggregate.png</span>
+<span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$</div>
+
+</body>
+</html>
+
