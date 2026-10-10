@@ -249,6 +249,24 @@ class Portfolio:
             "cvar_95": self.conditional_value_at_risk(0.95),
         }
 
+    def __len__(self) -> int:
+        """Returns the number of assets in the portfolio."""
+        return len(self.assets)
+
+    def __getitem__(self, ticker: str) -> PriceSeries:
+        """Allows dictionary-style access to constituent PriceSeries by ticker."""
+        for asset in self.assets:
+            if asset.ticker == ticker:
+                return asset
+        raise KeyError(f"Asset with ticker '{ticker}' not found in portfolio.")
+
+    def __str__(self) -> str:
+        weights_str = ", ".join(f"{t}: {w:.1%}" for t, w in self.weights_dict.items())
+        return (
+            f"Cartera '{self.name}' con {len(self.assets)} activos ({weights_str}) "
+            f"y capital inicial {self.initial_capital:,.2f} EUR"
+        )
+
     def __repr__(self) -> str:
         weights_str = ", ".join(f"{t}: {w:.1%}" for t, w in self.weights_dict.items())
         return (

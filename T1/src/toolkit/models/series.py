@@ -24,6 +24,16 @@ class PriceSeries:
         self.mean_return = float(clean_returns.mean()) if not clean_returns.empty else 0.0
         self.std_return = float(clean_returns.std()) if not clean_returns.empty else 0.0
 
+    def __len__(self) -> int:
+        """Returns the number of observations in the price series."""
+        return len(self.returns)
+
+    def __str__(self) -> str:
+        return (
+            f"PriceSeries({self.ticker}, type='{self.asset_type}', "
+            f"obs={len(self)}, mean={self.mean_return:+.4f}, std={self.std_return:.4f})"
+        )
+
     @property
     def returns(self) -> pd.Series:
         """Returns the clean daily returns series."""
