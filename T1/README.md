@@ -11,48 +11,74 @@
 
 ### Descripción
 
-Este proyecto implementa una toolbox profesional en Python para la ingesta, estandarización y análisis de información bursátil y macroeconómica, así como la gestión de carteras de inversión, simulación estocástica de **Monte Carlo** y generación de reportes cuantitativos y visuales.
+Este proyecto implementa una toolbox profesional en Python para la ingesta, estandarización y análisis de información bursátil y macroeconómica, así como la gestión cuantitativa de carteras de inversión, simulación estocástica de **Monte Carlo** y generación automatizada de reportes formales (Markdown) y cuadros de mando visuales.
 
-El diseño sigue una arquitectura modular y desacoplada mediante patrones de diseño orientados a objetos y **DataClasses**, separando estrictamente la capa de extracción de la capa de análisis, modelos, preprocesado y motores de diagnóstico.
+El diseño sigue una arquitectura modular y desacoplada mediante patrones de diseño orientados a objetos y **DataClasses**, separando estrictamente la capa de extracción de la capa de análisis, modelos, preprocesado y motores de diagnóstico y simulación estocástica.
 
 ### Estructura del repositorio
 
 ```
 T1/
-├── doc/                              # Guías, arquitectura y diapositivas del taller
-│   ├── Taller_B1_T1.pdf
-│   ├── architecture.md               # Especificación y diagramas formales UML
-│   ├── guia_taller_parte1_git_ssh.*  # Parte 1: Configuración Git & SSH
-│   └── guia_taller_parte2.*          # Parte 2: Arquitectura y extracción
-├── examples/
-│   ├── test_fetch.py                 # Extracción individual y batch (Yahoo)
-│   ├── test_fetch_fred.py            # Extracción macroeconómica (FRED)
-│   ├── test_portfolio.py             # Creación y métricas de Cartera (Portfolio)
-│   ├── test_monte_carlo.py           # Motor Monte Carlo y gráficos estocásticos
-│   ├── test_reports_and_cleaning.py  # Limpieza, validación, reporte Markdown y dashboard
-│   ├── plots/                        # Gráficos generados (conos MC y dashboard analítico)
-│   └── reports/                      # Informes cuantitativos generados en Markdown
-├── src/
+├── doc/                                               # Guías, especificaciones y material documental del taller
+│   ├── Taller_B1_T1.pdf                               # Diapositivas y enunciado oficial del taller
+│   ├── architecture.md                                # Especificación técnica formal y diagramas UML/flujo
+│   ├── guia_taller_parte1_git_ssh.html / .pdf         # Guía Parte 1: Configuración de Git & SSH
+│   ├── guia_taller_parte2_arquitectura_extraccion.*   # Guía Parte 2: Arquitectura, entorno y capa de extracción
+│   ├── guia_taller_parte3_modelado_cartera.html / .pdf# Guía Parte 3: Modelado cuantitativo y gestión de carteras
+│   ├── guia_taller_parte4_monte_carlo.html / .pdf     # Guía Parte 4: Motor estocástico de Monte Carlo y difusión
+│   └── guia_taller_parte5_limpieza_reportes.html /.pdf# Guía Parte 5: Preprocesado, validación y cuadro de mando
+├── examples/                                          # Scripts de ejecución, pruebas y validación
+│   ├── test_fetch.py                                  # Extracción individual y batch (Yahoo Finance)
+│   ├── test_fetch_fred.py                             # Extracción macroeconómica (FRED)
+│   ├── test_portfolio.py                              # Construcción, métricas de riesgo y diagnóstico de Cartera
+│   ├── test_monte_carlo.py                            # Motor Monte Carlo univariante y multivariante (Cholesky)
+│   ├── test_reports_and_cleaning.py                   # Validación fail-fast, reporte Markdown y dashboard 2x2
+│   ├── plots/                                         # Gráficos generados (.png)
+│   │   ├── mc_aapl.png                                # Simulación GBM individual (conos y distribución terminal)
+│   │   ├── mc_portfolio_multivariate.png              # Simulación multivariante correlada (Cholesky)
+│   │   ├── mc_portfolio_aggregate.png                 # Simulación agregada de cartera
+│   │   └── portfolio_dashboard.png                    # Cuadro de mando 2x2 (rendimiento, drawdown, corr, VaR)
+│   └── reports/                                       # Informes cuantitativos generados
+│       └── portfolio_report.md                        # Informe ejecutivo exportado en Markdown
+├── src/                                               # Código fuente del paquete
 │   └── toolkit/
-│       ├── __init__.py               # Exportaciones de primer nivel
-│       ├── data/                     # Capa de ingesta y conectores de mercado
-│       │   ├── base.py               # Interfaz abstracta (BaseDataExtractor)
-│       │   ├── yahoo.py              # Extractor Yahoo Finance (acciones/índices)
-│       │   ├── fred.py               # Extractor FRED (datos macroeconómicos)
+│       ├── __init__.py                                # Exportaciones de primer nivel
+│       ├── data/                                      # Capa de ingesta y conectores de mercado
+│       │   ├── base.py                                # Interfaz abstracta (BaseDataExtractor)
+│       │   ├── yahoo.py                               # Extractor Yahoo Finance (acciones/índices)
+│       │   ├── fred.py                                # Extractor FRED (datos macroeconómicos)
 │       │   └── __init__.py
-│       ├── models/                   # Capa de modelado cuantitativo
-│       │   ├── series.py             # DataClass PriceSeries (series individuales)
-│       │   ├── portfolio.py          # DataClass Portfolio (agregación, riesgos, reportes)
-│       │   ├── monte_carlo.py        # Motor Monte Carlo y DataClass MonteCarloResult
+│       ├── models/                                    # Capa de modelado cuantitativo
+│       │   ├── series.py                              # DataClass PriceSeries (series individuales)
+│       │   ├── portfolio.py                           # DataClass Portfolio (agregación, riesgos, reportes)
+│       │   ├── monte_carlo.py                         # Motor Monte Carlo y DataClass MonteCarloResult
 │       │   └── __init__.py
-│       └── utils/                    # Capa de limpieza, alineación y validación
-│           ├── cleaning.py           # Gestión de NaNs, forward-fill y alineación multicalendario
-│           ├── validation.py         # Validación estructural estricta de invariantes
+│       └── utils/                                     # Capa de limpieza, alineación y validación
+│           ├── cleaning.py                            # Gestión de NaNs, forward-fill y alineación multicalendario
+│           ├── validation.py                          # Validación estructural estricta de invariantes (fail-fast)
 │           └── __init__.py
-├── pyproject.toml
-├── requirements.txt
-└── setup.py
+├── pyproject.toml                                     # Configuración moderna de empaquetado pip/build
+├── requirements.txt                                   # Dependencias fijadas del proyecto
+└── setup.py                                           # Compatibilidad editable setuptools
 ```
+
+---
+
+### Documentación del Proyecto
+
+El repositorio cuenta con un catálogo exhaustivo de documentación técnica y guías prácticas paso a paso disponibles en [`doc/`](doc/), generadas tanto en formato web interactivo (`HTML`) como en documentos de impresión de alta fidelidad (`PDF`, optimizados sin encabezados/pies de página de navegador):
+
+| Documento | Formatos | Descripción y Contenidos Clave |
+|---|:---:|---|
+| **Enunciado y Diapositivas Oficiales** | [`PDF`](doc/Taller_B1_T1.pdf) | Requisitos formales, bloques de entrega del taller B1 y criterios de evaluación. |
+| **Especificación de Arquitectura y UML** | [`Markdown`](doc/architecture.md) | Diagramas UML formales, flujo de datos por capas, patrones de diseño aplicados y contratos de interfaz. |
+| **Parte 1 — Git y Configuración SSH** | [`HTML`](doc/guia_taller_parte1_git_ssh.html) · [`PDF`](doc/guia_taller_parte1_git_ssh.pdf) | Configuración de claves SSH Ed25519, vinculación con GitHub, clonación del repositorio y buenas prácticas de control de versiones. |
+| **Parte 2 — Arquitectura y Extracción** | [`HTML`](doc/guia_taller_parte2_arquitectura_extraccion.html) · [`PDF`](doc/guia_taller_parte2_arquitectura_extraccion.pdf) | Configuración de virtualenv, jerarquía `BaseDataExtractor`, conectores `YahooFinanceExtractor` y `FREDExtractor`, y `PriceSeries`. |
+| **Parte 3 — Modelado y Gestión de Carteras** | [`HTML`](doc/guia_taller_parte3_modelado_cartera.html) · [`PDF`](doc/guia_taller_parte3_modelado_cartera.pdf) | DataClass `Portfolio`, sincronización de calendarios, normalización de pesos, matrices estadísticas y métricas de riesgo (Sharpe, Drawdown, VaR/CVaR). |
+| **Parte 4 — Motor Monte Carlo y Difusión** | [`HTML`](doc/guia_taller_parte4_monte_carlo.html) · [`PDF`](doc/guia_taller_parte4_monte_carlo.pdf) | Motor estocástico GBM, simulación multivariante con descomposición de Cholesky ($\boldsymbol{\Sigma} = \boldsymbol{L}\boldsymbol{L}^T$), percentiles y conos de trayectorias. |
+| **Parte 5 — Preprocesado, Reportes y Cuadro de Mando** | [`HTML`](doc/guia_taller_parte5_limpieza_reportes.html) · [`PDF`](doc/guia_taller_parte5_limpieza_reportes.pdf) | Política de validación estricta *fail-fast*, alineación de calendarios festivos, exportación de informes Markdown y dashboard visual 2x2. |
+
+---
 
 ### Arquitectura del Sistema y Diagramas (Requisito 4.6)
 
@@ -64,9 +90,9 @@ classDiagram
 
     class BaseDataExtractor {
         <<abstract>>
-        +fetch_series(ticker, start, end, asset_type) PriceSeries*
-        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]*
-        #_standardize_dataframe(df) DataFrame*
+        +fetch_series(ticker: str, start: str, end: str, asset_type: str) PriceSeries*
+        +fetch_batch(tickers: List[str], start: str, end: str, asset_type: str) List[PriceSeries]*
+        #_standardize_dataframe(df: DataFrame) DataFrame*
     }
 
     class YahooFinanceExtractor {
@@ -88,12 +114,16 @@ classDiagram
         +DataFrame data
         +float mean_return
         +float std_return
-        +annualized_return() float
-        +annualized_volatility() float
-        +sharpe_ratio(rf) float
+        +__len__() int
+        +__str__() str
+        +annualized_return(trading_days) float
+        +annualized_volatility(trading_days) float
+        +sharpe_ratio(rf, trading_days) float
+        +cumulative_returns() Series
+        +drawdown_series() Series
         +max_drawdown() float
         +value_at_risk(conf) float
-        +simulate_montecarlo() MonteCarloResult
+        +simulate_montecarlo(n_sims, horizon) MonteCarloResult
         +plot_montecarlo() Figure
     }
 
@@ -101,19 +131,30 @@ classDiagram
         <<dataclass>>
         +List~PriceSeries~ assets
         +Union~Dict,List,None~ weights
+        +str name
         +float initial_capital
         +Dict~str,float~ weights_dict
+        +ndarray weights_vector
         +DataFrame returns_df
+        +DataFrame prices_df
         +Series portfolio_returns
+        +float mean_return
+        +float std_return
         +DataFrame covariance_matrix
         +DataFrame correlation_matrix
+        +__len__() int
+        +__getitem__(ticker) PriceSeries
+        +__str__() str
         +annualized_return() float
         +annualized_volatility() float
         +sharpe_ratio(rf) float
+        +cumulative_returns() Series
+        +cumulative_wealth(capital) Series
+        +drawdown_series() Series
         +max_drawdown() float
         +value_at_risk(conf, method) float
         +conditional_value_at_risk(conf) float
-        +simulate_montecarlo() MonteCarloResult
+        +simulate_montecarlo(n_sims, horizon, multivariate) MonteCarloResult
         +plot_montecarlo() Figure
         +report(rf, conf, output_path) str
         +plots_report(figsize, save_path) Figure
@@ -121,30 +162,40 @@ classDiagram
 
     class MonteCarloEngine {
         <<service>>
-        +simulate_gbm() MonteCarloResult$
-        +simulate_multivariate_gbm() MonteCarloResult$
+        +simulate_gbm(S0, mu, sigma, horizon, n_sims, dt, seed)$ MonteCarloResult
+        +simulate_multivariate_gbm(capital, weights, mu_vec, cov_mat, horizon, n_sims, dt, seed)$ MonteCarloResult
     }
 
     class MonteCarloResult {
         <<dataclass>>
+        +str name
         +ndarray trajectories
+        +int horizon
+        +int n_simulations
+        +float initial_value
+        +float mu
+        +float sigma
+        +str method
+        +ndarray terminal_values
         +float terminal_mean
+        +float terminal_median
         +float terminal_var
         +float terminal_cvar
         +float probability_of_loss
-        +plot() Figure
+        +plot(figsize, save_path) Figure
     }
 
     class ValidationUtils {
         <<utility>>
-        +validate_price_dataframe(df) bool$
-        +validate_portfolio_weights(weights, tickers) Dict$
+        +validate_price_dataframe(df)$ bool
+        +validate_portfolio_weights(weights, tickers)$ Dict
     }
 
     class CleaningUtils {
         <<utility>>
-        +clean_missing_values(df, method) DataFrame$
-        +align_calendar_series(series_map, method) DataFrame$
+        +clean_missing_values(df, method)$ DataFrame
+        +align_calendar_series(series_map, method)$ DataFrame
+        +filter_anomalous_returns(series)$ Series
     }
 
     BaseDataExtractor <|-- YahooFinanceExtractor : implements
@@ -189,9 +240,10 @@ Un `dataclass` interoperable que estandariza las series de cualquier fuente de d
 | `data` | `pd.DataFrame` | Datos indexados por fecha con columnas `'close'` y `'returns'` |
 | `mean_return` | `float` | Retorno diario medio (auto-calculado en `__post_init__`) |
 | `std_return` | `float` | Desviación típica diaria (auto-calculada en `__post_init__`) |
-| `annualized_return()` | `float` | Retorno anualizado compuesto geométrico |
+| `__len__()` | `int` | Número de observaciones efectivas de rentabilidad |
+| `annualized_return()` | `float` | Retorno anualizado compuesto geométrico ($T = 252$) |
 | `annualized_volatility()` | `float` | Volatilidad anualizada ($\sigma \times \sqrt{252}$) |
-| `sharpe_ratio()` | `float` | Ratio de Sharpe anualizado |
+| `sharpe_ratio()` | `float` | Ratio de Sharpe anualizado $(R_{ann} - R_f) / \sigma_{ann}$ |
 | `max_drawdown()` | `float` | Caída máxima histórica (*Peak-to-Trough*) |
 | `value_at_risk(0.95)` | `float` | VaR histórico diario al 95% de confianza |
 | `simulate_montecarlo()` | `MonteCarloResult` | Simulación estocástica de trayectorias (GBM) |
@@ -211,6 +263,8 @@ Un `dataclass` que agrega múltiples activos `PriceSeries`, gestiona sus pondera
 | `mean_return` / `std_return` | `float` | Media y volatilidad diaria de la cartera (auto-calculadas) |
 | `covariance_matrix` | `pd.DataFrame` | Matriz de covarianza diaria entre activos |
 | `correlation_matrix` | `pd.DataFrame` | Matriz de correlación diaria entre activos |
+| `__len__()` | `int` | Número de activos integrantes de la cartera |
+| `__getitem__(ticker)` | `PriceSeries` | Acceso directo indexado por clave de ticker (`portfolio['AAPL']`) |
 | `annualized_return()` | `float` | Rentabilidad anualizada de la cartera |
 | `annualized_volatility()` | `float` | Volatilidad anualizada de la cartera |
 | `sharpe_ratio()` | `float` | Ratio de Sharpe de la cartera |
@@ -243,6 +297,8 @@ Un `dataclass` que agrega múltiples activos `PriceSeries`, gestiona sus pondera
   - `validate_price_dataframe(df)`: Exige `DatetimeIndex`, orden monotónico estricto, sin duplicados temporales, presencia de columna `'close'` numérica y **precios estrictamente positivos (> 0)**.
   - `validate_portfolio_weights(weights, tickers)`: Valida dimensiones, ausencia de NaNs/infinitos, restricciones de cortos y normalización exacta a 1.0.
 
+---
+
 ### Instalación
 
 #### 1. Crear y activar el entorno virtual
@@ -264,6 +320,8 @@ O instalar las dependencias directamente:
 ```bash
 pip install -r requirements.txt
 ```
+
+---
 
 ### Ejemplos de uso
 
@@ -299,9 +357,9 @@ portfolio.plots_report(
 )
 print("Dashboard gráfico de 4 paneles guardado.")
 
-# 5. Simulación de Monte Carlo
+# 5. Simulación de Monte Carlo multivariante (Cholesky)
 mc = portfolio.simulate_montecarlo(n_simulations=2000, horizon=252)
-mc.plot(save_path="examples/plots/mc_portfolio.png", show=False)
+mc.plot(save_path="examples/plots/mc_portfolio_multivariate.png", show=False)
 ```
 
 Ejecuta los scripts de prueba completos:
@@ -310,6 +368,8 @@ Ejecuta los scripts de prueba completos:
 - `python examples/test_portfolio.py`
 - `python examples/test_monte_carlo.py`
 - `python examples/test_reports_and_cleaning.py`
+
+---
 
 ### Dependencias
 
@@ -320,17 +380,6 @@ Ejecuta los scripts de prueba completos:
 | `numpy` | ≥ 1.24.0 | Operaciones algebraicas, Cholesky y simulación vectorizada |
 | `matplotlib` | ≥ 3.7.0 | Visualizaciones gráficas, dashboards analíticos y conos MC |
 | `pandas-datareader` | ≥ 0.10.0 | Conexión con la API de FRED (datos macroeconómicos) |
-
-### Documentación
-
-Las guías del taller se encuentran disponibles en formato HTML y PDF en [`doc/`](doc/):
-- **Arquitectura y Especificación UML** — [`doc/architecture.md`](doc/architecture.md)
-- **Parte 1 — Git y Configuración SSH** (`guia_taller_parte1_git_ssh.pdf` · [`HTML`](doc/guia_taller_parte1_git_ssh.html) | [`PDF`](doc/guia_taller_parte1_git_ssh.pdf)
-- **Parte 2 — Arquitectura, Entorno y Extractor** (`guia_taller_parte2.pdf` · [`HTML`](doc/guia_taller_parte2_arquitectura_extraccion.html) | [`PDF`](doc/guia_taller_parte2_arquitectura_extraccion.pdf))
-- **Parte 3 — Modelado Cuantitativo y Gestión de Carteras** (`guia_taller_parte3_modelado_cartera.pdf` · [`HTML`](doc/guia_taller_parte3_modelado_cartera.html) | [`PDF`](doc/guia_taller_parte3_modelado_cartera.pdf)
-- **Parte 4 — Motor Estocástico de Monte Carlo y Difusión** (`guia_taller_parte4_monte_carlo.pdf` · [`HTML`](doc/guia_taller_parte4_monte_carlo.html) | [`PDF`](doc/guia_taller_parte4_monte_carlo.pdf))
-- **Parte 5 — Preprocesado, Validación, Reportes y Cuadro de Mando** (`guia_taller_parte5_limpieza_reportes.pdf` · [`HTML`](doc/guia_taller_parte5_limpieza_reportes.html) | [`PDF`](doc/guia_taller_parte5_limpieza_reportes.pdf))
-- **Diapositivas y Enunciado Oficial** — `Taller_B1_T1.pdf`
 
 ---
 
@@ -349,40 +398,66 @@ The architecture emphasizes clean object-oriented design and **DataClasses**, cl
 
 ```
 T1/
-├── doc/                              # Workshop guides, architecture & slides
-│   ├── Taller_B1_T1.pdf
-│   ├── architecture.md               # Formal architecture specification & UML
-│   ├── guia_taller_parte1_git_ssh.*  # Part 1: Git & SSH setup
-│   └── guia_taller_parte2.*          # Part 2: Architecture & extraction
-├── examples/
-│   ├── test_fetch.py                 # Single & batch fetch (Yahoo)
-│   ├── test_fetch_fred.py            # Macro data extraction (FRED)
-│   ├── test_portfolio.py             # Portfolio creation & risk metrics
-│   ├── test_monte_carlo.py           # Monte Carlo engine & stochastic charts
-│   ├── test_reports_and_cleaning.py  # Cleaning, validation, Markdown report & dashboard
-│   ├── plots/                        # Exported simulation & dashboard figures
-│   └── reports/                      # Exported Markdown quantitative reports
-├── src/
+├── doc/                                               # Workshop guides, formal specs & slide decks
+│   ├── Taller_B1_T1.pdf                               # Assignment slides & official specification
+│   ├── architecture.md                                # Formal architecture specification & UML diagrams
+│   ├── guia_taller_parte1_git_ssh.html / .pdf         # Part 1 Guide: Git & SSH configuration
+│   ├── guia_taller_parte2_arquitectura_extraccion.*   # Part 2 Guide: Architecture, environment & extraction
+│   ├── guia_taller_parte3_modelado_cartera.html / .pdf# Part 3 Guide: Quantitative modeling & portfolio
+│   ├── guia_taller_parte4_monte_carlo.html / .pdf     # Part 4 Guide: Monte Carlo engine & diffusion
+│   └── guia_taller_parte5_limpieza_reportes.html /.pdf# Part 5 Guide: Preprocessing, validation & dashboard
+├── examples/                                          # Execution scripts, unit tests & demonstrations
+│   ├── test_fetch.py                                  # Single & batch fetch (Yahoo Finance)
+│   ├── test_fetch_fred.py                             # Macro data extraction (FRED)
+│   ├── test_portfolio.py                              # Portfolio creation, risk metrics & diagnostics
+│   ├── test_monte_carlo.py                            # Univariate & multivariate (Cholesky) Monte Carlo
+│   ├── test_reports_and_cleaning.py                   # Fail-fast validation, Markdown report & 2x2 dashboard
+│   ├── plots/                                         # Exported simulation & dashboard figures (.png)
+│   │   ├── mc_aapl.png                                # Single-asset GBM cone & terminal distribution
+│   │   ├── mc_portfolio_multivariate.png              # Correlated multivariate Cholesky simulation
+│   │   ├── mc_portfolio_aggregate.png                 # Aggregate portfolio simulation
+│   │   └── portfolio_dashboard.png                    # 4-panel visual dashboard (returns, dd, corr, VaR)
+│   └── reports/                                       # Exported Markdown quantitative reports
+│       └── portfolio_report.md                        # Generated executive Markdown report
+├── src/                                               # Package source code
 │   └── toolkit/
-│       ├── __init__.py               # Top-level exports
-│       ├── data/                     # Ingestion layer & market connectors
-│       │   ├── base.py               # Abstract interface (BaseDataExtractor)
-│       │   ├── yahoo.py              # Yahoo Finance extractor (equities/indices)
-│       │   ├── fred.py               # FRED extractor (macroeconomic series)
+│       ├── __init__.py                                # Top-level package exports
+│       ├── data/                                      # Ingestion layer & market connectors
+│       │   ├── base.py                                # Abstract interface (BaseDataExtractor)
+│       │   ├── yahoo.py                               # Yahoo Finance extractor (equities/indices)
+│       │   ├── fred.py                                # FRED extractor (macroeconomic series)
 │       │   └── __init__.py
-│       ├── models/                   # Quantitative modeling layer
-│       │   ├── series.py             # PriceSeries DataClass (single series)
-│       │   ├── portfolio.py          # Portfolio DataClass (aggregation, risk, reports)
-│       │   ├── monte_carlo.py        # Monte Carlo engine & MonteCarloResult DataClass
+│       ├── models/                                    # Quantitative modeling layer
+│       │   ├── series.py                              # PriceSeries DataClass (single asset series)
+│       │   ├── portfolio.py                           # Portfolio DataClass (aggregation, risk, reports)
+│       │   ├── monte_carlo.py                         # Monte Carlo engine & MonteCarloResult DataClass
 │       │   └── __init__.py
-│       └── utils/                    # Data cleaning, calendar alignment & validation
-│           ├── cleaning.py           # Missing value imputation & multi-exchange alignment
-│           ├── validation.py         # Strict structural invariant enforcement
+│       └── utils/                                     # Data cleaning, calendar alignment & validation
+│           ├── cleaning.py                            # Missing value imputation & multi-exchange alignment
+│           ├── validation.py                          # Strict structural invariant enforcement (fail-fast)
 │           └── __init__.py
-├── pyproject.toml
-├── requirements.txt
-└── setup.py
+├── pyproject.toml                                     # Modern build system & dependency configuration
+├── requirements.txt                                   # Pinned dependency requirements
+└── setup.py                                           # Editable installation support
 ```
+
+---
+
+### Project Documentation
+
+The repository features an exhaustive documentation suite and step-by-step technical guides located in [`doc/`](doc/), distributed in both interactive web format (`HTML`) and high-fidelity print documents (`PDF`, optimized without browser header/footer artifacts):
+
+| Document | Formats | Overview & Core Topics |
+|---|:---:|---|
+| **Official Assignment & Slide Deck** | [`PDF`](doc/Taller_B1_T1.pdf) | Formal workshop requirements, assignment blocks, and academic evaluation criteria. |
+| **Architecture & Formal UML Specification** | [`Markdown`](doc/architecture.md) | Formal UML class diagrams, layered dataflow, design patterns, and interface contracts. |
+| **Part 1 — Git & SSH Configuration** | [`HTML`](doc/guia_taller_parte1_git_ssh.html) · [`PDF`](doc/guia_taller_parte1_git_ssh.pdf) | Ed25519 SSH key generation, GitHub linkage, repository cloning, and version control best practices. |
+| **Part 2 — Architecture, Environment & Extraction** | [`HTML`](doc/guia_taller_parte2_arquitectura_extraccion.html) · [`PDF`](doc/guia_taller_parte2_arquitectura_extraccion.pdf) | Virtualenv setup, `BaseDataExtractor` abstract hierarchy, `YahooFinanceExtractor`, `FREDExtractor`, and `PriceSeries`. |
+| **Part 3 — Quantitative Modeling & Portfolio Management** | [`HTML`](doc/guia_taller_parte3_modelado_cartera.html) · [`PDF`](doc/guia_taller_parte3_modelado_cartera.pdf) | `Portfolio` DataClass, multi-calendar alignment, weight normalization, covariance/correlation matrices, and risk metrics (Sharpe, Drawdown, VaR/CVaR). |
+| **Part 4 — Monte Carlo Engine & Diffusion** | [`HTML`](doc/guia_taller_parte4_monte_carlo.html) · [`PDF`](doc/guia_taller_parte4_monte_carlo.pdf) | Stochastic GBM engine, correlated multivariate simulation via Cholesky decomposition ($\boldsymbol{\Sigma} = \boldsymbol{L}\boldsymbol{L}^T$), percentiles, and cones. |
+| **Part 5 — Preprocessing, Validation & Dashboard** | [`HTML`](doc/guia_taller_parte5_limpieza_reportes.html) · [`PDF`](doc/guia_taller_parte5_limpieza_reportes.pdf) | Strict fail-fast invariant validation, trading holiday calendar alignment, automated Markdown reporting, and 2x2 visual dashboard. |
+
+---
 
 ### System Architecture & Diagrams (Requirement 4.6)
 
@@ -394,19 +469,21 @@ classDiagram
 
     class BaseDataExtractor {
         <<abstract>>
-        +fetch_series(ticker, start, end, asset_type) PriceSeries*
-        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]*
-        #_standardize_dataframe(df) DataFrame*
+        +fetch_series(ticker: str, start: str, end: str, asset_type: str) PriceSeries*
+        +fetch_batch(tickers: List[str], start: str, end: str, asset_type: str) List[PriceSeries]*
+        #_standardize_dataframe(df: DataFrame) DataFrame*
     }
 
     class YahooFinanceExtractor {
         +fetch_series(ticker, start, end, asset_type) PriceSeries
         +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
+        #_standardize_dataframe(df) DataFrame
     }
 
     class FREDExtractor {
         +fetch_series(ticker, start, end, asset_type) PriceSeries
         +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
+        #_standardize_dataframe(df, ticker) DataFrame
     }
 
     class PriceSeries {
@@ -416,12 +493,16 @@ classDiagram
         +DataFrame data
         +float mean_return
         +float std_return
-        +annualized_return() float
-        +annualized_volatility() float
-        +sharpe_ratio(rf) float
+        +__len__() int
+        +__str__() str
+        +annualized_return(trading_days) float
+        +annualized_volatility(trading_days) float
+        +sharpe_ratio(rf, trading_days) float
+        +cumulative_returns() Series
+        +drawdown_series() Series
         +max_drawdown() float
         +value_at_risk(conf) float
-        +simulate_montecarlo() MonteCarloResult
+        +simulate_montecarlo(n_sims, horizon) MonteCarloResult
         +plot_montecarlo() Figure
     }
 
@@ -429,19 +510,30 @@ classDiagram
         <<dataclass>>
         +List~PriceSeries~ assets
         +Union~Dict,List,None~ weights
+        +str name
         +float initial_capital
         +Dict~str,float~ weights_dict
+        +ndarray weights_vector
         +DataFrame returns_df
+        +DataFrame prices_df
         +Series portfolio_returns
+        +float mean_return
+        +float std_return
         +DataFrame covariance_matrix
         +DataFrame correlation_matrix
+        +__len__() int
+        +__getitem__(ticker) PriceSeries
+        +__str__() str
         +annualized_return() float
         +annualized_volatility() float
         +sharpe_ratio(rf) float
+        +cumulative_returns() Series
+        +cumulative_wealth(capital) Series
+        +drawdown_series() Series
         +max_drawdown() float
         +value_at_risk(conf, method) float
         +conditional_value_at_risk(conf) float
-        +simulate_montecarlo() MonteCarloResult
+        +simulate_montecarlo(n_sims, horizon, multivariate) MonteCarloResult
         +plot_montecarlo() Figure
         +report(rf, conf, output_path) str
         +plots_report(figsize, save_path) Figure
@@ -449,30 +541,40 @@ classDiagram
 
     class MonteCarloEngine {
         <<service>>
-        +simulate_gbm() MonteCarloResult$
-        +simulate_multivariate_gbm() MonteCarloResult$
+        +simulate_gbm(S0, mu, sigma, horizon, n_sims, dt, seed)$ MonteCarloResult
+        +simulate_multivariate_gbm(capital, weights, mu_vec, cov_mat, horizon, n_sims, dt, seed)$ MonteCarloResult
     }
 
     class MonteCarloResult {
         <<dataclass>>
+        +str name
         +ndarray trajectories
+        +int horizon
+        +int n_simulations
+        +float initial_value
+        +float mu
+        +float sigma
+        +str method
+        +ndarray terminal_values
         +float terminal_mean
+        +float terminal_median
         +float terminal_var
         +float terminal_cvar
         +float probability_of_loss
-        +plot() Figure
+        +plot(figsize, save_path) Figure
     }
 
     class ValidationUtils {
         <<utility>>
-        +validate_price_dataframe(df) bool$
-        +validate_portfolio_weights(weights, tickers) Dict$
+        +validate_price_dataframe(df)$ bool
+        +validate_portfolio_weights(weights, tickers)$ Dict
     }
 
     class CleaningUtils {
         <<utility>>
-        +clean_missing_values(df, method) DataFrame$
-        +align_calendar_series(series_map, method) DataFrame$
+        +clean_missing_values(df, method)$ DataFrame
+        +align_calendar_series(series_map, method)$ DataFrame
+        +filter_anomalous_returns(series)$ Series
     }
 
     BaseDataExtractor <|-- YahooFinanceExtractor : implements
@@ -517,9 +619,10 @@ A standardized `dataclass` modeling price series from any source:
 | `data` | `pd.DataFrame` | Date-indexed DataFrame with `'close'` and `'returns'` |
 | `mean_return` | `float` | Daily mean return (auto-computed in `__post_init__`) |
 | `std_return` | `float` | Daily return standard deviation (auto-computed in `__post_init__`) |
-| `annualized_return()` | `float` | Compound annualized return |
+| `__len__()` | `int` | Number of observations in the return series |
+| `annualized_return()` | `float` | Compound annualized return ($T = 252$) |
 | `annualized_volatility()` | `float` | Annualized volatility ($\sigma \times \sqrt{252}$) |
-| `sharpe_ratio()` | `float` | Annualized Sharpe ratio |
+| `sharpe_ratio()` | `float` | Annualized Sharpe ratio $(R_{ann} - R_f) / \sigma_{ann}$ |
 | `max_drawdown()` | `float` | Maximum peak-to-trough drawdown |
 | `value_at_risk(0.95)` | `float` | Daily historical 95% Value at Risk |
 | `simulate_montecarlo()` | `MonteCarloResult` | Stochastic trajectory simulation (GBM) |
@@ -539,6 +642,8 @@ A `dataclass` aggregating multiple `PriceSeries` assets, managing weights, valid
 | `mean_return` / `std_return` | `float` | Daily mean and volatility of portfolio returns |
 | `covariance_matrix` | `pd.DataFrame` | Daily return covariance matrix |
 | `correlation_matrix` | `pd.DataFrame` | Daily return correlation matrix |
+| `__len__()` | `int` | Number of constituent assets |
+| `__getitem__(ticker)` | `PriceSeries` | Direct indexing access by ticker (`portfolio['AAPL']`) |
 | `annualized_return()` | `float` | Annualized portfolio return |
 | `annualized_volatility()` | `float` | Annualized portfolio volatility |
 | `sharpe_ratio()` | `float` | Annualized Sharpe ratio |
@@ -568,6 +673,8 @@ A `dataclass` aggregating multiple `PriceSeries` assets, managing weights, valid
   - *Justification*: Unconstrained inputs cause silent failures in quantitative finance (e.g., negative prices producing NaN returns, non-positive definite covariances). Strict validation enforces fail-fast integrity.
   - `validate_price_dataframe(df)`: Enforces `DatetimeIndex`, monotonic order, uniqueness, required numeric `'close'`, and strictly positive prices.
   - `validate_portfolio_weights(weights, tickers)`: Enforces dimension match, finite values, short constraints, and exact normalization.
+
+---
 
 ### Installation
 
@@ -613,13 +720,6 @@ Run test examples:
 | `matplotlib` | ≥ 3.7.0 | Plotting trajectories, distributions, and analytics dashboard |
 | `pandas-datareader` | ≥ 0.10.0 | FRED macroeconomic API client |
 
-### Documentation
+---
 
-Workshop guides are available in both HTML and PDF formats in [`doc/`](doc/):
-- **Architecture & Formal UML Specification** — [`doc/architecture.md`](doc/architecture.md)
-- **Part 1 — Git & SSH Configuration** (`guia_taller_parte1_git_ssh.pdf` · [`HTML`](doc/guia_taller_parte1_git_ssh.html))
-- **Part 2 — Architecture, Environment & Extractor** (`guia_taller_parte2.pdf` · [`HTML`](doc/guia_taller_parte2.html))
-- **Part 3 — Quantitative Modeling & Portfolio Management** (`guia_taller_parte3_modelado_cartera.pdf` · [`HTML`](doc/guia_taller_parte3_modelado_cartera.html))
-- **Part 4 — Monte Carlo Stochastic Diffusion Engine** (`guia_taller_parte4_monte_carlo.pdf` · [`HTML`](doc/guia_taller_parte4_monte_carlo.html))
-- **Part 5 — Preprocessing, Validation, Reporting & Dashboard** (`guia_taller_parte5_limpieza_reportes.pdf` · [`HTML`](doc/guia_taller_parte5_limpieza_reportes.html))
-- **Workshop Slides & Assignment Specification** — `Taller_B1_T1.pdf`
+*MIAX - Máster en Inteligencia Artificial Aplicada a Mercados Financieros (Instituto BME).*
