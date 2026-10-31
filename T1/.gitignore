@@ -19,5 +19,6 @@ data/
 reports/
 *.png
 
-# Claude config
-.claude/
+# Claude config: se comparten solo las skills (.claude/skills/)
+.claude/*
+!.claude/skills/
