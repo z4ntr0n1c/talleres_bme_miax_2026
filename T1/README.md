@@ -41,6 +41,7 @@ T1/
 │   └── reports/                                       # Informes cuantitativos generados
 │       └── portfolio_report.md                        # Informe ejecutivo exportado en Markdown
 ├── src/                                               # Código fuente del paquete
+│   ├── setup.py                                       # Legado setuptools (no usar para instalar)
 │   └── toolkit/
 │       ├── __init__.py                                # Exportaciones de primer nivel
 │       ├── data/                                      # Capa de ingesta y conectores de mercado
@@ -58,8 +59,7 @@ T1/
 │           ├── validation.py                          # Validación estructural estricta de invariantes (fail-fast)
 │           └── __init__.py
 ├── pyproject.toml                                     # Configuración moderna de empaquetado pip/build
-├── requirements.txt                                   # Dependencias fijadas del proyecto
-└── setup.py                                           # Compatibilidad editable setuptools
+└── requirements.txt                                   # Dependencias fijadas del proyecto
 ```
 
 ---
@@ -311,8 +311,16 @@ source .venv/bin/activate
 
 #### 2. Instalar el paquete en modo editable
 
+Desde la raíz `T1/` (donde está `pyproject.toml`; el paquete usa *src-layout*):
+
 ```bash
-pip install -e src/
+pip install -e .
+```
+
+Comprobación rápida:
+
+```bash
+python -c "import toolkit; print(toolkit.__all__)"
 ```
 
 O instalar las dependencias directamente:
@@ -420,6 +428,7 @@ T1/
 │   └── reports/                                       # Exported Markdown quantitative reports
 │       └── portfolio_report.md                        # Generated executive Markdown report
 ├── src/                                               # Package source code
+│   ├── setup.py                                       # Legacy setuptools file (do not use to install)
 │   └── toolkit/
 │       ├── __init__.py                                # Top-level package exports
 │       ├── data/                                      # Ingestion layer & market connectors
@@ -437,8 +446,7 @@ T1/
 │           ├── validation.py                          # Strict structural invariant enforcement (fail-fast)
 │           └── __init__.py
 ├── pyproject.toml                                     # Modern build system & dependency configuration
-├── requirements.txt                                   # Pinned dependency requirements
-└── setup.py                                           # Editable installation support
+└── requirements.txt                                   # Pinned dependency requirements
 ```
 
 ---
@@ -682,7 +690,7 @@ A `dataclass` aggregating multiple `PriceSeries` assets, managing weights, valid
 cd T1
 python -m venv .venv
 source .venv/bin/activate
-pip install -e src/
+pip install -e .          # run from T1/ (pyproject.toml, src-layout)
 ```
 
 ### Usage
