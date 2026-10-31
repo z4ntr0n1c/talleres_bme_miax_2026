@@ -1,0 +1,33 @@
+# {{TALLER}} — {{DESCRIPCION}}
+
+> Máster MIAX · Instituto BME
+
+## Instalación
+
+```bash
+cd {{TALLER}}
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+python -c "import {{PAQUETE}}"
+```
+
+## Estructura
+
+```
+{{TALLER}}/
+├── src/{{PAQUETE}}/
+│   ├── data/      # Ingesta (interfaces ABC + conectores)
+│   ├── utils/     # Limpieza y validación
+│   └── models/    # Objetos de dominio (dataclasses)
+├── examples/      # Scripts de demostración
+├── tests/         # pytest
+└── doc/           # architecture.md y guías
+```
+
+## Tests
+
+```bash
+pytest -q
+```
+

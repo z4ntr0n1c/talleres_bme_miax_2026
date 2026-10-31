@@ -19,5 +19,7 @@ data/
 reports/
 *.png
 
-# Claude config
-.claude/
+# Claude config: se comparten solo las skills (.claude/skills/);
+# el resto (settings.local.json, caché, etc.) es local de cada usuario
+.claude/*
+!.claude/skills/

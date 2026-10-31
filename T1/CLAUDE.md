@@ -79,7 +79,8 @@ cd T1
 
 ## Git y ficheros ignorados
 
-- `.gitignore` excluye: `.venv/`, `__pycache__/`, `*.egg-info/`, `data/`, `reports/`, `*.png`, `.vscode/` y este `.claude/`.
+- `.gitignore` excluye: `.venv/`, `__pycache__/`, `*.egg-info/`, `data/`, `reports/`, `*.png`, `.vscode/` y `.claude/` **excepto** `.claude/skills/`, que se comparte.
+- Las skills de arquitectura comunes a todos los talleres están en `../.claude/skills/` (raíz del repo); consúltalas antes de diseñar código nuevo.
 - Commits estilo convencional: `feat: ...`, `fix: ...`, `docs: ...`.
 - No subas datos descargados, credenciales ni API keys (usa variables de entorno).
 
