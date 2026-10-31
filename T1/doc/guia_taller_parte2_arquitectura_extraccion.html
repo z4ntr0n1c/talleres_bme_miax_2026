@@ -54,14 +54,14 @@
     }
     pre {
       font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
-      font-size: 9pt;
+      font-size: 8.6pt;
       background-color: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 5px;
       padding: 8px 12px;
       margin: 6px 0 10px 0;
-      white-space: pre;
-      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
     .terminal-box {
       background-color: #18181b;
@@ -101,10 +101,10 @@ pip install -e .</code></pre>
   <pre><code>src/toolkit/
 ├── __init__.py          # API pública exportada (__all__)
 ├── logging_utils.py     # Configuración idempotente de logging (setup_logging)
-├── reports.py           # Capa de presentación: informes Markdown y gráficos Matplotlib
-├── data/                # Capa de ingesta multifuente (base.py, yahoo.py, fred.py)
-├── models/              # Dominio cuantitativo (series.py, portfolio.py, monte_carlo.py, metrics.py)
-└── utils/               # Limpieza multicalendario y validación fail-fast (cleaning.py, validation.py)</code></pre>
+├── reports.py           # Presentación: informes Markdown y gráficos Matplotlib
+├── data/                # Ingesta multifuente (base.py, yahoo.py, fred.py)
+├── models/              # Dominio (series, portfolio, monte_carlo, metrics)
+└── utils/               # Limpieza y validación (cleaning.py, validation.py)</code></pre>
 
   <h2>3. Ingesta Multifuente Estandarizada y <code>PriceSeries</code> (Requisitos 4.2 y 4.3)</h2>
   <p>Todos los conectores heredan de <code>BaseDataExtractor</code> (<code>YahooFinanceExtractor</code> para renta variable e índices bursátiles, y <code>FREDExtractor</code> para series macroeconómicas de la Reserva Federal con <em>fallback</em> automático a <code>fredgraph.csv</code>) y normalizan sus salidas mediante <code>_normalize_close_dataframe()</code> al esquema canónico <code>["close", "returns"]</code> dentro de <code>PriceSeries</code>:</p>
@@ -120,7 +120,7 @@ class PriceSeries:
         if "close" not in self.data.columns:
             raise ValueError("Input data must contain a 'close' column.")
         self.ticker = self.ticker.strip().upper()
-        self.data = self.data.copy()  # Copia defensiva sin mutar el DataFrame de entrada
+        self.data = self.data.copy()  # Copia defensiva sin mutar la entrada
         if "returns" not in self.data.columns:
             self.data["returns"] = self.data["close"].pct_change()
         clean_returns = self.returns

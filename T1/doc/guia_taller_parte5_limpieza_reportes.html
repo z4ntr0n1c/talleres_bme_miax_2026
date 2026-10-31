@@ -81,6 +81,10 @@
     .term-user { color: #38bdf8; font-weight: bold; }
     .term-path { color: #818cf8; }
     .term-out { color: #e4e4e7; }
+    math {
+      font-family: "Latin Modern Math", "STIX Two Math", "Cambria Math", "DejaVu Math TeX Gyre", serif;
+      font-size: 10.5pt;
+    }
   </style>
 </head>
 <body>
@@ -92,8 +96,8 @@
   <p>En ingeniería financiera cuantitativa, la aceptación de entradas arbitrarias sin control es una fuente crítica de riesgo operacional. Para prevenir distorsiones en matrices de covarianzas o divisiones entre cero por precios negativos, <code>src/toolkit/utils/validation.py</code> impone una política de <strong>fallo temprano (<em>fail-fast</em>)</strong>:</p>
   <ul>
     <li><strong>Índice temporal</strong>: Exige <code>pd.DatetimeIndex</code> con orden cronológico monotónico estricto y sin duplicados temporales.</li>
-    <li><strong>Precios válidos</strong>: Los precios de cierre (<code>close</code>) deben ser números estrictamente positivos ($> 0$).</li>
-    <li><strong>Ponderaciones de cartera</strong>: Validación dimensional, ausencia de valores nulos o infinitos, y normalización exacta a la unidad ($\sum w_i = 1.0$).</li>
+    <li><strong>Precios válidos</strong>: Los precios de cierre (<code>close</code>) deben ser números estrictamente positivos (<math><mo>&gt;</mo><mn>0</mn></math>).</li>
+    <li><strong>Ponderaciones de cartera</strong>: Validación dimensional, ausencia de valores nulos o infinitos, y normalización exacta a la unidad (<math><mo>&sum;</mo><msub><mi>w</mi><mi>i</mi></msub><mo>=</mo><mn>1.0</mn></math>).</li>
   </ul>
 
   <h2>2. Limpieza de Datos y Sincronización Multicalendario</h2>
@@ -110,7 +114,7 @@ aligned_returns = align_calendar_series(series_dict, join_method="inner")</code>
     <li><strong>Resumen Ejecutivo</strong>: Rentabilidad acumulada y anualizada, volatilidad, ratio de Sharpe, Max Drawdown, VaR 95% (histórico y paramétrico mediante <code>statistics.NormalDist</code>) y CVaR 95%.</li>
     <li><strong>Desglose de Posiciones</strong>: Ponderaciones relativas y métricas individuales por activo.</li>
     <li><strong>Matriz de Correlación Cruzada</strong>: Tabla formateada en Markdown.</li>
-    <li><strong>Alertas Cuantitativas de Riesgo</strong>: Detección automática de concentración excesiva ($w_i > 40\%$), colinealidad elevada entre activos ($r > 0.75$) y caídas severas ($> 20\%$).</li>
+    <li><strong>Alertas Cuantitativas de Riesgo</strong>: Detección automática de concentración excesiva (<math><msub><mi>w</mi><mi>i</mi></msub><mo>&gt;</mo><mn>40</mn><mo>%</mo></math>), colinealidad elevada entre activos (<math><mi>r</mi><mo>&gt;</mo><mn>0.75</mn></math>) y caídas severas (<math><mo>&gt;</mo><mn>20</mn><mo>%</mo></math>).</li>
   </ol>
 
   <h2>4. Cuadro de Mando Analítico Multipanel (<code>.plots_report()</code>)</h2>
@@ -158,7 +162,7 @@ aligned_returns = align_calendar_series(series_dict, join_method="inner")</code>
    |---|---|---|
    | **Cumulative Return** | **+26.47%** | Total compound growth over the observation period |
    | **Annualized Return** | **+28.43%** | Geometric annualized expected compound rate |
-   | **Annualized Volatility** | **15.23%** | Annualized standard deviation ($\sigma \times \sqrt{252}$) |
+   | **Annualized Volatility** | **15.23%** | Annualized standard deviation (σ × √252) |
    | **Sharpe Ratio (Rf=3.0%)** | **1.67** | Excess return per unit of volatility |
    | **Maximum Drawdown** | **-11.41%** | Maximum peak-to-trough decline |
    | **Historical Daily VaR (95%)** | **-1.42%** | Maximum expected daily loss at 95% confidence (Empirical) |
