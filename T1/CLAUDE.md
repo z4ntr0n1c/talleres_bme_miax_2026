@@ -39,11 +39,15 @@ pip install -r requirements.txt
 ```
 T1/
 ├── src/toolkit/
-│   ├── data/      base.py (BaseDataExtractor, ABC) · yahoo.py · fred.py
-│   ├── models/    series.py (PriceSeries) · portfolio.py (Portfolio) · monte_carlo.py (MonteCarloEngine, MonteCarloResult)
-│   └── utils/     cleaning.py · validation.py (ValidationError)
-├── examples/      test_*.py (scripts de validación) · plots/ · reports/
-├── doc/           guías, arquitectura, enunciado
+│   ├── __init__.py       # API pública y __version__
+│   ├── logging_utils.py  # setup_logging() idempotente
+│   ├── reports.py        # Capa de presentación: Markdown report + gráficos Matplotlib
+│   ├── data/             # base.py (BaseDataExtractor, ABC) · yahoo.py · fred.py
+│   ├── models/           # series.py (PriceSeries) · portfolio.py (Portfolio) · monte_carlo.py · metrics.py
+│   └── utils/            # cleaning.py · validation.py (ValidationError)
+├── tests/                # test_toolkit.py (suite unitaria offline sin red: unittest / pytest)
+├── examples/             # test_*.py (scripts de validación con red) · plots/ · reports/
+├── doc/                  # guías, arquitectura, enunciado
 ├── pyproject.toml · requirements.txt
 ```
 
