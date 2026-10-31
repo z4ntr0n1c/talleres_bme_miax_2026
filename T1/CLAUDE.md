@@ -79,7 +79,7 @@ cd T1
 
 ## Git y ficheros ignorados
 
-- `.gitignore` excluye: `.venv/`, `__pycache__/`, `*.egg-info/`, `data/`, `reports/`, `*.png`, `.vscode/` y este `CLAUDE.md`.
+- `.gitignore` excluye: `.venv/`, `__pycache__/`, `*.egg-info/`, `data/`, `reports/`, `*.png`, `.vscode/` y este `.claude/`.
 - Commits estilo convencional: `feat: ...`, `fix: ...`, `docs: ...`.
 - No subas datos descargados, credenciales ni API keys (usa variables de entorno).
 
