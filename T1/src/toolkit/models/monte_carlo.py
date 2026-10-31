@@ -1,13 +1,19 @@
-"""
-Monte Carlo Simulation Engine for financial assets and investment portfolios.
+"""Monte Carlo Simulation Engine for financial assets and investment portfolios.
 
 Provides stochastic trajectory simulation based on Geometric Brownian Motion (GBM)
 and multivariate correlated asset diffusion, with analytical summaries and visual reporting.
 """
 
+from __future__ import annotations
+
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Any
+from pathlib import Path
+from typing import Any
+
 import numpy as np
+
+from .metrics import TRADING_DAYS_PER_YEAR
 
 
 @dataclass
@@ -16,14 +22,14 @@ class MonteCarloResult:
 
     Attributes:
         name: Name of the asset or portfolio simulated.
-        trajectories: 2D NumPy array of shape (horizon + 1, n_simulations)
+        trajectories: 2D NumPy array of shape ``(horizon + 1, n_simulations)``
                       containing the simulated value paths over time.
         horizon: Number of forward time steps (e.g. trading days).
         n_simulations: Total number of generated Monte Carlo trajectories.
-        initial_value: Starting price or capital at t = 0.
+        initial_value: Starting price or capital at ``t = 0``.
         mu: Drift parameter (daily expected return) used in the simulation.
         sigma: Diffusion parameter (daily volatility) used in the simulation.
-        method: Stochastic model employed ('gbm' or 'multivariate_gbm').
+        method: Stochastic model employed (``'gbm'`` or ``'multivariate_gbm'``).
     """
 
     name: str
@@ -36,7 +42,7 @@ class MonteCarloResult:
     method: str = "gbm"
     time_steps: np.ndarray = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.time_steps = np.arange(self.horizon + 1)
 
     @property
@@ -79,41 +85,33 @@ class MonteCarloResult:
         """Estimated probability that terminal value is below the initial investment."""
         return float(np.mean(self.terminal_values < self.initial_value))
 
-    def percentiles(self, q: Optional[List[float]] = None) -> Dict[float, float]:
-        """Calculates specific percentiles of the terminal value distribution.
+    def percentiles(
+        self, q: Sequence[float] = (0.05, 0.25, 0.50, 0.75, 0.95)
+    ) -> dict[float, float]:
+        """Calculate specific percentiles of the terminal value distribution.
 
         Args:
-            q: List of percentiles in [0, 1] range (default: [0.05, 0.25, 0.50, 0.75, 0.95]).
+            q: Sequence of percentiles in ``[0, 1]`` range.
         """
-        if q is None:
-            q = [0.05, 0.25, 0.50, 0.75, 0.95]
         return {p: float(np.percentile(self.terminal_values, p * 100.0)) for p in q}
 
     def terminal_var(self, confidence_level: float = 0.95) -> float:
-        """Computes Value at Risk (VaR) in monetary units at the terminal horizon.
-
-        Expressed as the maximum expected monetary loss at the given confidence level.
-        """
+        """Compute Value at Risk (VaR) in monetary units at the terminal horizon."""
         cutoff = float(np.percentile(self.terminal_values, (1.0 - confidence_level) * 100.0))
-        loss = self.initial_value - cutoff
-        return float(max(0.0, loss))
+        return float(max(0.0, self.initial_value - cutoff))
 
     def terminal_cvar(self, confidence_level: float = 0.95) -> float:
-        """Computes Conditional Value at Risk (CVaR / Expected Shortfall) in monetary units.
-
-        Average monetary loss in the tail beyond the VaR threshold.
-        """
+        """Compute Conditional Value at Risk (CVaR / Expected Shortfall) in monetary units."""
         cutoff = float(np.percentile(self.terminal_values, (1.0 - confidence_level) * 100.0))
         tail = self.terminal_values[self.terminal_values <= cutoff]
         if len(tail) == 0:
             return self.terminal_var(confidence_level)
-        expected_tail_val = float(np.mean(tail))
-        loss = self.initial_value - expected_tail_val
-        return float(max(0.0, loss))
+        return float(max(0.0, self.initial_value - float(np.mean(tail))))
 
-    def summary(self, confidence_level: float = 0.95) -> Dict[str, Any]:
-        """Generates a comprehensive diagnostic summary of the Monte Carlo simulation."""
-        pcts = self.percentiles([0.05, 0.25, 0.50, 0.75, 0.95])
+    def summary(self, confidence_level: float = 0.95) -> dict[str, Any]:
+        """Generate a comprehensive diagnostic summary of the Monte Carlo simulation."""
+        pcts = self.percentiles((0.05, 0.25, 0.50, 0.75, 0.95))
+        conf_pct = int(confidence_level * 100)
         return {
             "name": self.name,
             "method": self.method,
@@ -122,8 +120,8 @@ class MonteCarloResult:
             "initial_value": self.initial_value,
             "daily_mu": self.mu,
             "daily_sigma": self.sigma,
-            "annualized_drift": self.mu * 252,
-            "annualized_vol": self.sigma * np.sqrt(252),
+            "annualized_drift": self.mu * TRADING_DAYS_PER_YEAR,
+            "annualized_vol": self.sigma * np.sqrt(TRADING_DAYS_PER_YEAR),
             "terminal_mean": self.terminal_mean,
             "terminal_median": self.terminal_median,
             "terminal_std": self.terminal_std,
@@ -131,8 +129,8 @@ class MonteCarloResult:
             "terminal_max": self.terminal_max,
             "expected_return": (self.terminal_mean - self.initial_value) / self.initial_value,
             "probability_of_loss": self.probability_of_loss,
-            f"terminal_var_{int(confidence_level*100)}": self.terminal_var(confidence_level),
-            f"terminal_cvar_{int(confidence_level*100)}": self.terminal_cvar(confidence_level),
+            f"terminal_var_{conf_pct}": self.terminal_var(confidence_level),
+            f"terminal_cvar_{conf_pct}": self.terminal_cvar(confidence_level),
             "p05": pcts[0.05],
             "p25": pcts[0.25],
             "p50": pcts[0.50],
@@ -142,194 +140,75 @@ class MonteCarloResult:
 
     def plot(
         self,
-        title: Optional[str] = None,
+        title: str | None = None,
         max_paths_to_display: int = 150,
         confidence_level: float = 0.95,
-        figsize: Tuple[int, int] = (14, 6),
-        save_path: Optional[str] = None,
+        figsize: tuple[int, int] = (14, 6),
+        save_path: str | Path | None = None,
         show: bool = True,
     ) -> Any:
-        """Visualizes simulation trajectories and terminal value distribution.
+        """Visualize simulation trajectories and terminal value distribution."""
+        from ..reports import plot_monte_carlo
 
-        Args:
-            title: Custom super-title for the figure.
-            max_paths_to_display: Number of sample trajectories to plot (to maintain rendering performance).
-            confidence_level: Confidence level for VaR line and intervals.
-            figsize: Figure dimensions in inches.
-            save_path: Optional path to export the figure (PNG/PDF).
-            show: Whether to invoke plt.show().
-
-        Returns:
-            Tuple of (matplotlib.figure.Figure, np.ndarray of Axes).
-        """
-        import matplotlib.pyplot as plt
-
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
-        plot_title = title or f"Monte Carlo Simulation: {self.name} ({self.n_simulations:,} paths, T={self.horizon}d)"
-        fig.suptitle(plot_title, fontsize=14, fontweight="bold", y=0.98)
-
-        # ---------------- Subplot 1: Trajectories ----------------
-        display_n = min(self.n_simulations, max_paths_to_display)
-        ax1.plot(
-            self.time_steps,
-            self.trajectories[:, :display_n],
-            color="#2563eb",
-            alpha=0.10,
-            linewidth=0.8,
+        return plot_monte_carlo(
+            self,
+            title=title,
+            max_paths_to_display=max_paths_to_display,
+            confidence_level=confidence_level,
+            figsize=figsize,
+            save_path=save_path,
+            show=show,
         )
 
-        # Statistical envelopes across all paths
-        median_path = np.median(self.trajectories, axis=1)
-        p_lower = np.percentile(self.trajectories, (1.0 - confidence_level) * 100.0, axis=1)
-        p_upper = np.percentile(self.trajectories, confidence_level * 100.0, axis=1)
 
-        ax1.plot(self.time_steps, median_path, color="#ea580c", linewidth=2.2, label="Median Path")
-        ax1.plot(
-            self.time_steps,
-            p_upper,
-            color="#16a34a",
-            linestyle="--",
-            linewidth=1.8,
-            label=f"{int(confidence_level*100)}th Percentile",
-        )
-        ax1.plot(
-            self.time_steps,
-            p_lower,
-            color="#dc2626",
-            linestyle="--",
-            linewidth=1.8,
-            label=f"{int((1.0-confidence_level)*100)}th Percentile",
-        )
-        ax1.axhline(
-            self.initial_value,
-            color="#475569",
-            linestyle=":",
-            linewidth=1.5,
-            label=f"Initial ({self.initial_value:,.1f})",
-        )
-        ax1.fill_between(self.time_steps, p_lower, p_upper, color="#2563eb", alpha=0.08)
-
-        ax1.set_title("Simulated Trajectories (Sample Paths & Envelopes)", fontsize=11, fontweight="semibold")
-        ax1.set_xlabel("Time Horizon (Trading Days)", fontsize=10)
-        ax1.set_ylabel("Value", fontsize=10)
-        ax1.grid(True, linestyle=":", alpha=0.6)
-        ax1.legend(loc="upper left", fontsize=9, framealpha=0.9)
-
-        # ---------------- Subplot 2: Terminal Distribution ----------------
-        n_bins = min(60, max(20, self.n_simulations // 40))
-        counts, bins, _ = ax2.hist(
-            self.terminal_values,
-            bins=n_bins,
-            density=True,
-            color="#93c5fd",
-            edgecolor="#1d4ed8",
-            alpha=0.65,
-            label="Terminal Distribution",
-        )
-
-        var_threshold = float(np.percentile(self.terminal_values, (1.0 - confidence_level) * 100.0))
-
-        ax2.axvline(
-            self.initial_value,
-            color="#475569",
-            linestyle=":",
-            linewidth=1.5,
-            label=f"Initial: {self.initial_value:,.1f}",
-        )
-        ax2.axvline(
-            self.terminal_mean,
-            color="#ea580c",
-            linestyle="-",
-            linewidth=2.0,
-            label=f"Mean: {self.terminal_mean:,.1f}",
-        )
-        ax2.axvline(
-            var_threshold,
-            color="#dc2626",
-            linestyle="--",
-            linewidth=1.8,
-            label=f"{int(confidence_level*100)}% VaR Cutoff: {var_threshold:,.1f}",
-        )
-
-        # Highlight tail loss region
-        tail_bins = bins[bins <= var_threshold]
-        if len(tail_bins) > 1:
-            ax2.axvspan(bins[0], var_threshold, color="#ef4444", alpha=0.15, label=f"Tail Loss (P={1-confidence_level:.0%})")
-
-        ax2.set_title(f"Terminal Value Distribution (at T={self.horizon})", fontsize=11, fontweight="semibold")
-        ax2.set_xlabel("Terminal Value", fontsize=10)
-        ax2.set_ylabel("Probability Density", fontsize=10)
-        ax2.grid(True, linestyle=":", alpha=0.6)
-        ax2.legend(loc="upper right", fontsize=9, framealpha=0.9)
-
-        plt.tight_layout()
-
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches="tight")
-
-        if show:
-            plt.show()
-
-        return fig, (ax1, ax2)
+def _validate_simulation_params(
+    initial_value: float,
+    horizon: int,
+    n_simulations: int,
+    sigma: float = 0.0,
+) -> None:
+    """Validate common Monte Carlo input parameters."""
+    if initial_value <= 0:
+        raise ValueError(f"initial_value must be positive, got {initial_value}")
+    if horizon <= 0:
+        raise ValueError(f"horizon must be positive integer, got {horizon}")
+    if n_simulations <= 0:
+        raise ValueError(f"n_simulations must be positive integer, got {n_simulations}")
+    if sigma < 0:
+        raise ValueError(f"sigma must be non-negative, got {sigma}")
 
 
 class MonteCarloEngine:
-    """Stochastic engine executing Monte Carlo simulations for financial time series."""
+    """Stochastic engine executing vectorized Monte Carlo simulations for financial series."""
 
     @staticmethod
     def simulate_gbm(
         initial_value: float,
         mu: float,
         sigma: float,
-        horizon: int = 252,
+        horizon: int = TRADING_DAYS_PER_YEAR,
         n_simulations: int = 1000,
         dt: float = 1.0,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         name: str = "Asset",
     ) -> MonteCarloResult:
-        """Simulates single-asset or aggregate portfolio paths using Geometric Brownian Motion (GBM).
+        """Simulate single-asset or aggregate portfolio paths using Geometric Brownian Motion (GBM).
 
-        S_{t+1} = S_t * exp((mu - 0.5 * sigma^2) * dt + sigma * sqrt(dt) * Z)
-
-        Args:
-            initial_value: Starting asset price or portfolio capital.
-            mu: Expected return per time step (daily drift).
-            sigma: Standard deviation of returns per time step (daily volatility).
-            horizon: Number of forward projection steps (default: 252 days).
-            n_simulations: Number of paths to simulate (default: 1,000).
-            dt: Time increment per step (default: 1.0).
-            seed: Optional random number generator seed for deterministic reproducibility.
-            name: Label assigned to the simulation run.
-
-        Returns:
-            MonteCarloResult instance containing the simulated trajectories and stats.
+        $$S_{t+1} = S_t \\exp\\left((\\mu - \\tfrac{1}{2}\\sigma^2)\\Delta t + \\sigma\\sqrt{\\Delta t}\\,Z_t\\right)$$
         """
-        if initial_value <= 0:
-            raise ValueError(f"initial_value must be positive, got {initial_value}")
-        if horizon <= 0:
-            raise ValueError(f"horizon must be positive integer, got {horizon}")
-        if n_simulations <= 0:
-            raise ValueError(f"n_simulations must be positive integer, got {n_simulations}")
-        if sigma < 0:
-            raise ValueError(f"sigma must be non-negative, got {sigma}")
-
+        _validate_simulation_params(initial_value, horizon, n_simulations, sigma)
         rng = np.random.default_rng(seed)
 
-        # Drift and diffusion components
         drift = (mu - 0.5 * (sigma**2)) * dt
         diffusion = sigma * np.sqrt(dt)
 
-        # Generate Gaussian shocks: shape (horizon, n_simulations)
         shocks = rng.standard_normal(size=(horizon, n_simulations))
         daily_log_returns = drift + diffusion * shocks
 
-        # Cumulative log returns
         cum_log_returns = np.vstack([
             np.zeros((1, n_simulations)),
             np.cumsum(daily_log_returns, axis=0),
         ])
-
-        # Exponentiate to obtain price paths: S_t = S_0 * exp(sum(r))
         trajectories = initial_value * np.exp(cum_log_returns)
 
         return MonteCarloResult(
@@ -349,31 +228,18 @@ class MonteCarloEngine:
         weights: np.ndarray,
         mu_vector: np.ndarray,
         cov_matrix: np.ndarray,
-        horizon: int = 252,
+        horizon: int = TRADING_DAYS_PER_YEAR,
         n_simulations: int = 1000,
         dt: float = 1.0,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         name: str = "Portfolio",
     ) -> MonteCarloResult:
-        """Simulates portfolio paths using correlated multivariate Geometric Brownian Motion.
+        """Simulate portfolio paths using correlated multivariate Geometric Brownian Motion.
 
-        Generates correlated Gaussian shocks using the Cholesky decomposition of the
-        asset covariance matrix: Sigma = L * L^T.
-
-        Args:
-            initial_capital: Baseline portfolio capital.
-            weights: 1D array of asset weights (normalized, sum=1.0).
-            mu_vector: 1D array of daily expected returns for each asset.
-            cov_matrix: 2D covariance matrix of daily asset returns.
-            horizon: Number of trading steps to project.
-            n_simulations: Number of Monte Carlo trajectories.
-            dt: Time increment per step (default: 1.0).
-            seed: Seed for random number generator.
-            name: Descriptive label for the portfolio.
-
-        Returns:
-            MonteCarloResult instance representing the simulated portfolio wealth paths.
+        Generates correlated Gaussian shocks in a fully vectorized manner using the
+        Cholesky decomposition of the empirical covariance matrix ($\\boldsymbol{\\Sigma} = \\boldsymbol{L}\\boldsymbol{L}^T$).
         """
+        _validate_simulation_params(initial_capital, horizon, n_simulations)
         n_assets = len(weights)
         if cov_matrix.shape != (n_assets, n_assets):
             raise ValueError(
@@ -383,42 +249,30 @@ class MonteCarloEngine:
 
         rng = np.random.default_rng(seed)
 
-        # Cholesky factor L such that L @ L.T = cov_matrix
         try:
-            L = np.linalg.cholesky(cov_matrix * dt)
+            chol = np.linalg.cholesky(cov_matrix * dt)
         except np.linalg.LinAlgError:
-            # Handle potential numerical non-positive-definiteness via eigenvalue clipping
             eigvals, eigvecs = np.linalg.eigh(cov_matrix * dt)
             eigvals = np.maximum(eigvals, 1e-8)
-            clean_cov = eigvecs @ np.diag(eigvals) @ eigvecs.T
-            L = np.linalg.cholesky(clean_cov)
+            chol = np.linalg.cholesky(eigvecs @ np.diag(eigvals) @ eigvecs.T)
 
         vol_vector = np.sqrt(np.diag(cov_matrix))
         drift_vector = (mu_vector - 0.5 * (vol_vector**2)) * dt
 
-        # Trajectories array for total portfolio wealth
-        portfolio_wealth = np.zeros((horizon + 1, n_simulations))
-        portfolio_wealth[0, :] = initial_capital
+        # Vectorized correlated shocks across (horizon, n_assets, n_simulations)
+        uncorrelated = rng.standard_normal(size=(horizon, n_assets, n_simulations))
+        correlated_shocks = chol @ uncorrelated
+        step_log_returns = drift_vector[np.newaxis, :, np.newaxis] + correlated_shocks
+        cum_log_returns = np.cumsum(step_log_returns, axis=0)
 
-        # Initial capital allocation per asset
-        asset_wealth = np.zeros((n_assets, n_simulations))
-        for i in range(n_assets):
-            asset_wealth[i, :] = initial_capital * weights[i]
+        initial_asset_wealth = initial_capital * weights[np.newaxis, :, np.newaxis]
+        asset_wealth_paths = initial_asset_wealth * np.exp(cum_log_returns)
 
-        for t in range(1, horizon + 1):
-            # Uncorrelated shocks ~ N(0, 1): shape (n_assets, n_simulations)
-            uncorrelated = rng.standard_normal(size=(n_assets, n_simulations))
-            # Correlated shocks via Cholesky
-            correlated_shocks = L @ uncorrelated
+        portfolio_wealth = np.vstack([
+            np.full((1, n_simulations), initial_capital, dtype=float),
+            asset_wealth_paths.sum(axis=1),
+        ])
 
-            # Asset log returns for step t
-            step_log_ret = drift_vector[:, np.newaxis] + correlated_shocks
-            asset_wealth = asset_wealth * np.exp(step_log_ret)
-
-            # Portfolio total wealth is sum of asset wealth
-            portfolio_wealth[t, :] = np.sum(asset_wealth, axis=0)
-
-        # Implied portfolio parameters
         portfolio_mu = float(np.sum(weights * mu_vector))
         portfolio_sigma = float(np.sqrt(weights.T @ cov_matrix @ weights))
 
@@ -432,4 +286,5 @@ class MonteCarloEngine:
             sigma=portfolio_sigma,
             method="multivariate_gbm",
         )
+
 
