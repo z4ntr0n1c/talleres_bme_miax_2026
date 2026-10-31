@@ -1,5 +1,4 @@
-"""
-Input validation utilities and policy enforcement for financial time series and portfolios.
+"""Input validation utilities and policy enforcement for financial time series and portfolios.
 
 Design Rationale and Architectural Justification:
 ------------------------------------------------
@@ -16,14 +15,16 @@ any incoming dataset must strictly adhere to structural and semantic invariants 
 being admitted into the analytical layer.
 """
 
-from typing import Dict, List, Optional, Sequence, Union
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+
 import numpy as np
 import pandas as pd
 
 
 class ValidationError(ValueError):
     """Custom exception raised when financial data fails validation invariants."""
-    pass
 
 
 def validate_price_dataframe(
@@ -32,7 +33,7 @@ def validate_price_dataframe(
     min_observations: int = 5,
     allow_zero_prices: bool = False,
 ) -> bool:
-    """Validates that a DataFrame satisfies the invariants required for financial time series.
+    """Validate that a DataFrame satisfies the invariants required for financial time series.
 
     Checks enforced:
       1. Instance type: Must be a pandas DataFrame.
@@ -67,7 +68,6 @@ def validate_price_dataframe(
             f"Insufficient observations: got {len(df)}, minimum required is {min_observations}."
         )
 
-    # 1. Datetime Index Validation
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValidationError(
             f"DataFrame index must be a pd.DatetimeIndex, but found {type(df.index).__name__}. "
@@ -86,7 +86,6 @@ def validate_price_dataframe(
             "Financial time series must have strictly unique observation dates."
         )
 
-    # 2. Columns & Data Types Validation
     for col in required_columns:
         if col not in df.columns:
             raise ValidationError(
@@ -98,9 +97,8 @@ def validate_price_dataframe(
                 f"Column '{col}' must contain numeric data, but has dtype '{df[col].dtype}'."
             )
 
-        # 3. Price positivity constraint
         if col == "close" and not allow_zero_prices:
-            non_positive = (df[col] <= 0).sum()
+            non_positive = int((df[col] <= 0).sum())
             if non_positive > 0:
                 raise ValidationError(
                     f"Column '{col}' contains {non_positive} non-positive values (<= 0). "
@@ -111,12 +109,12 @@ def validate_price_dataframe(
 
 
 def validate_portfolio_weights(
-    weights: Union[Dict[str, float], Sequence[float], np.ndarray],
+    weights: Mapping[str, float] | Sequence[float] | np.ndarray,
     tickers: Sequence[str],
     tolerance: float = 1e-4,
     allow_short: bool = False,
-) -> Dict[str, float]:
-    """Validates and normalizes allocation weights for a set of portfolio assets.
+) -> dict[str, float]:
+    """Validate and normalize allocation weights for a set of portfolio assets.
 
     Invariants checked:
       1. Correct dimension matching asset count.
@@ -126,24 +124,26 @@ def validate_portfolio_weights(
 
     Args:
         weights: Dictionary of {ticker: weight} or numeric sequence.
-        tickers: List of expected ticker symbols.
+        tickers: Sequence of expected ticker symbols.
         tolerance: Numerical tolerance for checking if sum equals 1.0.
         allow_short: Whether to permit negative weights (short positions).
 
     Returns:
-        Normalized dictionary mapping ticker -> weight summing to exactly 1.0.
+        Normalized dictionary mapping ticker -> weight summing to 1.0.
 
     Raises:
         ValidationError: If weight specification is invalid.
     """
     n_assets = len(tickers)
 
-    if isinstance(weights, dict):
+    if isinstance(weights, Mapping):
         missing = set(tickers) - set(weights.keys())
         if missing:
-            raise ValidationError(f"Weights dictionary is missing tickers: {sorted(list(missing))}")
+            raise ValidationError(
+                f"Weights dictionary is missing tickers: {sorted(missing)}"
+            )
         raw_vals = [float(weights[t]) for t in tickers]
-    elif isinstance(weights, (list, tuple, np.ndarray)):
+    elif isinstance(weights, (Sequence, np.ndarray)) and not isinstance(weights, (str, bytes)):
         if len(weights) != n_assets:
             raise ValidationError(
                 f"Weights length ({len(weights)}) does not match asset count ({n_assets})."
@@ -152,13 +152,11 @@ def validate_portfolio_weights(
     else:
         raise ValidationError(f"Unsupported weights type: {type(weights).__name__}.")
 
-    # Check for NaN / Inf
     if any(np.isnan(w) or np.isinf(w) for w in raw_vals):
         raise ValidationError("Portfolio weights contain NaN or infinite values.")
 
-    # Short selling constraint
     if not allow_short and any(w < 0 for w in raw_vals):
-        negative_weights = {t: w for t, w in zip(tickers, raw_vals) if w < 0}
+        negative_weights = {t: w for t, w in zip(tickers, raw_vals, strict=False) if w < 0}
         raise ValidationError(
             f"Negative weights detected while allow_short=False: {negative_weights}."
         )
@@ -167,7 +165,7 @@ def validate_portfolio_weights(
     if abs(total_w) < 1e-9:
         raise ValidationError("Sum of portfolio weights cannot be zero.")
 
-    # Normalize to 1.0
     normalized = [w / total_w for w in raw_vals]
-    return {t: round(w, 8) for t, w in zip(tickers, normalized)}
+    return {t: round(w, 8) for t, w in zip(tickers, normalized, strict=False)}
+
 

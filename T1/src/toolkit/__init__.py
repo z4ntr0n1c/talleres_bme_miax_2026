@@ -1,28 +1,43 @@
-from .models import PriceSeries, Portfolio, MonteCarloEngine, MonteCarloResult
-from .data import BaseDataExtractor, YahooFinanceExtractor, FREDExtractor
+"""toolkit: Financial data extraction, portfolio modeling, Monte Carlo simulation, and reporting."""
+
+from __future__ import annotations
+
+from . import data, models, reports, utils
+from .data import BaseDataExtractor, FREDExtractor, YahooFinanceExtractor
+from .logging_utils import setup_logging
+from .models import MonteCarloEngine, MonteCarloResult, Portfolio, PriceSeries
 from .utils import (
-    validate_price_dataframe,
-    validate_portfolio_weights,
     ValidationError,
-    clean_missing_values,
     align_calendar_series,
+    clean_missing_values,
     filter_anomalous_returns,
+    validate_portfolio_weights,
+    validate_price_dataframe,
 )
 
+__version__ = "0.1.0"
+
 __all__ = [
-    "PriceSeries",
-    "Portfolio",
+    "BaseDataExtractor",
+    "FREDExtractor",
     "MonteCarloEngine",
     "MonteCarloResult",
-    "BaseDataExtractor",
-    "YahooFinanceExtractor",
-    "FREDExtractor",
-    "validate_price_dataframe",
-    "validate_portfolio_weights",
+    "Portfolio",
+    "PriceSeries",
     "ValidationError",
-    "clean_missing_values",
+    "YahooFinanceExtractor",
+    "__version__",
     "align_calendar_series",
+    "clean_missing_values",
+    "data",
     "filter_anomalous_returns",
+    "models",
+    "reports",
+    "setup_logging",
+    "utils",
+    "validate_portfolio_weights",
+    "validate_price_dataframe",
 ]
+
 
 

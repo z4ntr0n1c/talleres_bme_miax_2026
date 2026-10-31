@@ -1,6 +1,9 @@
-from .series import PriceSeries
-from .portfolio import Portfolio
-from .monte_carlo import MonteCarloEngine, MonteCarloResult
+from __future__ import annotations
 
-__all__ = ["PriceSeries", "Portfolio", "MonteCarloEngine", "MonteCarloResult"]
+from .monte_carlo import MonteCarloEngine, MonteCarloResult
+from .portfolio import Portfolio
+from .series import PriceSeries
+
+__all__ = ["MonteCarloEngine", "MonteCarloResult", "Portfolio", "PriceSeries"]
+
 
