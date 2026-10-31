@@ -115,14 +115,16 @@
     </li>
   </ul>
 
-  <h2>2. Arquitectura: <code>MonteCarloEngine</code> y <code>MonteCarloResult</code></h2>
-  <p>En <code>src/toolkit/models/monte_carlo.py</code>, la simulación se ejecuta de manera totalmente vectorizada sobre NumPy:</p>
-  <pre><code># Generación vectorizada de trayectorias (horizonte x simulaciones)
-shocks = rng.standard_normal(size=(horizon, n_simulations))
-daily_log_returns = drift + diffusion * shocks
-cum_log_returns = np.vstack([np.zeros((1, n_simulations)), np.cumsum(daily_log_returns, axis=0)])
-trajectories = initial_value * np.exp(cum_log_returns)</code></pre>
-  <p>La DataClass <code>MonteCarloResult</code> almacena las trayectorias y calcula automáticamente métricas de riesgo terminal:</p>
+  <h2>2. Arquitectura Vectorizada: <code>MonteCarloEngine</code> y <code>MonteCarloResult</code></h2>
+  <p>En <code>src/toolkit/models/monte_carlo.py</code>, tanto la difusión univariante como la multivariante correlada por Cholesky se ejecutan de manera 100 % vectorizada sobre tensores de NumPy (sin bucles <code>for</code> por paso temporal):</p>
+  <pre><code># Choques correlados vectorizados: dimensiones (horizon, n_assets, n_simulations)
+uncorrelated = rng.standard_normal(size=(horizon, n_assets, n_simulations))
+step_log_returns = drift_vector[np.newaxis, :, np.newaxis] + (chol @ uncorrelated)
+asset_wealth_paths = (initial_capital * weights[np.newaxis, :, np.newaxis]) * np.exp(
+    np.cumsum(step_log_returns, axis=0)
+)
+portfolio_wealth = np.vstack([np.full((1, n_simulations), initial_capital), asset_wealth_paths.sum(axis=1)])</code></pre>
+  <p>La DataClass <code>MonteCarloResult</code> almacena las trayectorias, calcula métricas terminales y delega la visualización gráfica en <code>src/toolkit/reports.py</code> (<code>plot_monte_carlo</code>):</p>
   <ul>
     <li><code>terminal_mean</code> y <code>terminal_median</code>: Capital esperado y mediano a vencimiento.</li>
     <li><code>probability_of_loss</code>: Fracción de trayectorias donde el capital final es inferior al inicial ($S_T < S_0$).</li>
@@ -131,11 +133,11 @@ trajectories = initial_value * np.exp(cum_log_returns)</code></pre>
 
   <h2>3. Integración en Cartera y Visualización Gráfica</h2>
   <p>El motor se integra directamente en <code>Portfolio</code> y <code>PriceSeries</code> mediante los métodos:</p>
-  <pre><code># Simulación directa en la cartera
-mc_result = portfolio.simulate_montecarlo(n_simulations=2500, horizon=252, multivariate=True)
+  <pre><code># Simulación directa en la cartera (semilla reproducible opcional)
+mc_result = portfolio.simulate_montecarlo(n_simulations=2500, horizon=252, seed=123, multivariate=True)
 
-# Visualización automática en pantalla (cono estocástico + histograma de densidad con VaR)
-mc_result.plot(save_path="examples/plots/mc_portfolio.png")</code></pre>
+# Visualización delegada en toolkit.reports (cono estocástico + distribución terminal con VaR)
+mc_result.plot(save_path="examples/plots/mc_portfolio_multivariate.png", show=False)</code></pre>
 
   <h2>4. Verificación y Resultados de Ejecución</h2>
   <p>Ejecución de <code>examples/test_monte_carlo.py</code> simulando un activo individual (AAPL) y una cartera balanceada de 50.000 €:</p>
@@ -156,7 +158,6 @@ TESTING MONTE CARLO SIMULATION ENGINE (REQUIREMENT 4.4)
    Prob. of Loss:   9.30%
    95% Term. VaR:   $16.51
    95% Term. CVaR:  $35.38
-findfont: Failed to find font weight semibold for DejaVu Sans, now using 700.
    Saved plot to: /home/sergio/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1/examples/plots/mc_aapl.png
 
 3. Building Portfolio and Running Correlated Monte Carlo Simulation...

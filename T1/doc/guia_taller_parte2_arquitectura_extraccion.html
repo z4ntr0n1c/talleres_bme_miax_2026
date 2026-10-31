@@ -88,24 +88,26 @@
   <h1>Taller B1-T1: Arquitectura, Entorno y Extractor</h1>
   <div class="subtitle">MIAX - BME | Entorno Python, Modelado DataClass y Verificación de Ingesta</div>
 
-  <h2>1. Entorno Virtual y Dependencias Plug-and-Play</h2>
-  <p>Creación del entorno local aislado y registro del paquete en modo editable:</p>
+  <h2>1. Entorno Virtual y Dependencias Plug-and-Play (Requisito 4.1)</h2>
+  <p>Creación del entorno local aislado, instalación reproducible de dependencias y registro del paquete en modo editable (<em>src-layout</em> configurado en <code>pyproject.toml</code>):</p>
   <pre><code>python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 pip install -e .</code></pre>
 
-  <h2>2. Estructura de Directorios (/src)</h2>
-  <p>Jerarquía desacoplada para separar la ingesta de los modelos y utilidades:</p>
+  <h2>2. Estructura Modular en <code>/src</code> y Separación por Capas</h2>
+  <p>El paquete <code>toolkit</code> sigue una arquitectura estrictamente desacoplada por capas (<code>data &rarr; utils &rarr; models &rarr; reports</code>):</p>
   <pre><code>src/toolkit/
-├── __init__.py
-├── data/       # Extracción y conectores de mercado (base.py, yahoo.py)
-├── models/     # DataClasses de series de precios (series.py)
-└── utils/      # Métodos auxiliares y de limpieza</code></pre>
+├── __init__.py          # API pública exportada (__all__)
+├── logging_utils.py     # Configuración idempotente de logging (setup_logging)
+├── reports.py           # Capa de presentación: informes Markdown y gráficos Matplotlib
+├── data/                # Capa de ingesta multifuente (base.py, yahoo.py, fred.py)
+├── models/              # Dominio cuantitativo (series.py, portfolio.py, monte_carlo.py, metrics.py)
+└── utils/               # Limpieza multicalendario y validación fail-fast (cleaning.py, validation.py)</code></pre>
 
-  <h2>3. Modelado: DataClass PriceSeries</h2>
-  <p>En <code>src/toolkit/models/series.py</code>, cálculo automático de retorno medio y desviación típica:</p>
+  <h2>3. Ingesta Multifuente Estandarizada y <code>PriceSeries</code> (Requisitos 4.2 y 4.3)</h2>
+  <p>Todos los conectores heredan de <code>BaseDataExtractor</code> (<code>YahooFinanceExtractor</code> para renta variable e índices bursátiles, y <code>FREDExtractor</code> para series macroeconómicas de la Reserva Federal con <em>fallback</em> automático a <code>fredgraph.csv</code>) y normalizan sus salidas mediante <code>_normalize_close_dataframe()</code> al esquema canónico <code>["close", "returns"]</code> dentro de <code>PriceSeries</code>:</p>
   <pre><code>@dataclass
 class PriceSeries:
     ticker: str
@@ -114,24 +116,29 @@ class PriceSeries:
     mean_return: float = field(init=False)
     std_return: float = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if "close" not in self.data.columns:
-            raise ValueError("Los datos deben incluir una columna 'close'.")
+            raise ValueError("Input data must contain a 'close' column.")
+        self.ticker = self.ticker.strip().upper()
+        self.data = self.data.copy()  # Copia defensiva sin mutar el DataFrame de entrada
         if "returns" not in self.data.columns:
             self.data["returns"] = self.data["close"].pct_change()
-        clean = self.data["returns"].dropna()
-        self.mean_return = float(clean.mean()) if not clean.empty else 0.0
-        self.std_return = float(clean.std()) if not clean.empty else 0.0</code></pre>
+        clean_returns = self.returns
+        self.mean_return = float(clean_returns.mean()) if not clean_returns.empty else 0.0
+        self.std_return = float(clean_returns.std()) if not clean_returns.empty else 0.0</code></pre>
 
-  <h2>4. Validación de Extracción Multifuentey Descarga en Lote</h2>
-  <p>Ejecución exitosa de <code>examples/test_fetch.py</code> descargando activos individuales e índices:</p>
+  <h2>4. Validación de Extracción Multifuente y Descarga en Lote</h2>
+  <p>Ejecución de <code>examples/test_fetch.py</code> (Yahoo Finance: acciones e índices en lote) y <code>examples/test_fetch_fred.py</code> (FRED: series macroeconómicas interoperables):</p>
 
   <div class="terminal-box"><span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$ python examples/test_fetch.py
-<span class="term-out">Loaded: AAPL | Mean Return: 0.00066 | Std: 0.02045</span>
-<span class="term-out">Batch item: MSFT (250 trading days)</span>
-<span class="term-out">Batch item: SAN.MC (255 trading days)</span>
-<span class="term-out">Batch item: ^IBEX (255 trading days)</span>
-<span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$</div>
+<span class="term-out">Loaded: AAPL | Mean Return: 0.00066 | Std: 0.02045
+Batch item: MSFT (250 trading days)
+Batch item: SAN.MC (255 trading days)
+Batch item: ^IBEX (255 trading days)</span>
+<span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$ python examples/test_fetch_fred.py
+<span class="term-out">[MACRO] DFF | Mean: -0.000729 | Std: 0.009114 | Observations: 366
+[MACRO] VIXCLS | Mean: +0.006584 | Std: 0.095120 | Observations: 252
+[MACRO] DCOILWTICO | Mean: +0.000215 | Std: 0.018940 | Observations: 250</span></div>
 
 </body>
 </html>

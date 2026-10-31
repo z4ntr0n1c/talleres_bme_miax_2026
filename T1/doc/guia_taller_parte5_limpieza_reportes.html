@@ -105,16 +105,16 @@ clean_df = clean_missing_values(df, method="ffill", max_consecutive_nans=5)
 aligned_returns = align_calendar_series(series_dict, join_method="inner")</code></pre>
 
   <h2>3. Generación Automatizada de Informes en Markdown (<code>.report()</code>)</h2>
-  <p>El método <code>Portfolio.report()</code> genera un documento estructurado en Markdown con:</p>
+  <p>Siguiendo el principio de separación entre dominio y presentación, <code>Portfolio.report()</code> actúa como fachada y delega la construcción del documento en <code>toolkit.reports.build_portfolio_report()</code> (<code>src/toolkit/reports.py</code>), generando un informe en Markdown con:</p>
   <ol>
-    <li><strong>Resumen Ejecutivo</strong>: Rentabilidad acumulada y anualizada, volatilidad, ratio de Sharpe, Max Drawdown, VaR 95% (histórico y paramétrico) y CVaR 95%.</li>
+    <li><strong>Resumen Ejecutivo</strong>: Rentabilidad acumulada y anualizada, volatilidad, ratio de Sharpe, Max Drawdown, VaR 95% (histórico y paramétrico mediante <code>statistics.NormalDist</code>) y CVaR 95%.</li>
     <li><strong>Desglose de Posiciones</strong>: Ponderaciones relativas y métricas individuales por activo.</li>
     <li><strong>Matriz de Correlación Cruzada</strong>: Tabla formateada en Markdown.</li>
     <li><strong>Alertas Cuantitativas de Riesgo</strong>: Detección automática de concentración excesiva ($w_i > 40\%$), colinealidad elevada entre activos ($r > 0.75$) y caídas severas ($> 20\%$).</li>
   </ol>
 
   <h2>4. Cuadro de Mando Analítico Multipanel (<code>.plots_report()</code>)</h2>
-  <p>El método <code>Portfolio.plots_report()</code> produce una visualización analítica integral en formato 2x2:</p>
+  <p>El método <code>Portfolio.plots_report()</code> delega en <code>toolkit.reports.plot_portfolio_dashboard()</code> para renderizar un cuadro de mando visual 2x2:</p>
   <ul>
     <li><strong>Panel 1 (Superior Izquierdo)</strong>: Evolución comparada de la riqueza acumulada (base 1.0) de la cartera frente a cada activo constituyente.</li>
     <li><strong>Panel 2 (Superior Derecho)</strong>: Gráfico de caída acumulada (<em>Underwater Drawdown</em>) con marcado del punto de Max Drawdown histórico.</li>
@@ -122,8 +122,8 @@ aligned_returns = align_calendar_series(series_dict, join_method="inner")</code>
     <li><strong>Panel 4 (Inferior Derecho)</strong>: Histograma y función de densidad de retornos diarios con cotas de media, VaR 95% y CVaR 95%.</li>
   </ul>
 
-  <h2>5. Verificación y Resultados de Ejecución</h2>
-  <p>Ejecución de <code>examples/test_reports_and_cleaning.py</code> validando la suite completa de preprocesado y reportes:</p>
+  <h2>5. Verificación y Resultados de Ejecución (Suite Offline y Reportes)</h2>
+  <p>Ejecución de <code>examples/test_reports_and_cleaning.py</code> y de la suite de tests unitarios sin red (<code>tests/test_toolkit.py</code>):</p>
 
   <div class="terminal-box"><span class="term-env">(.venv)</span> <span class="term-user">sergio@sergio-xps-deb</span>:<span class="term-path">~/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1</span>$ python examples/test_reports_and_cleaning.py
 <span class="term-out">===========================================================================
@@ -186,7 +186,6 @@ aligned_returns = align_calendar_series(series_dict, join_method="inner")</code>
    | `MSFT` | 0.477 | 1.000 | 0.000 | 0.074 |
    | `SAN.MC` | -0.008 | 0.000 | 1.000 | 0.805 |
    [... report continues with Correlation Matrix & Diagnostics ...]
-findfont: Failed to find font weight semibold for DejaVu Sans, now using 700.
 
    [SUCCESS] 4-Panel Analytics Dashboard exported to: /home/sergio/Documents/Master_MIAX_BME/Talleres_Master_MIAX_BME/T1/examples/plots/portfolio_dashboard.png
 

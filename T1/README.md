@@ -44,21 +44,26 @@ T1/
 │   ├── setup.py                                       # Legado setuptools (no usar para instalar)
 │   └── toolkit/
 │       ├── __init__.py                                # Exportaciones de primer nivel
+│       ├── logging_utils.py                           # Configuración idempotente de logging (setup_logging)
+│       ├── reports.py                                 # Capa de presentación: informes Markdown y gráficos Matplotlib
 │       ├── data/                                      # Capa de ingesta y conectores de mercado
 │       │   ├── base.py                                # Interfaz abstracta (BaseDataExtractor)
 │       │   ├── yahoo.py                               # Extractor Yahoo Finance (acciones/índices)
-│       │   ├── fred.py                                # Extractor FRED (datos macroeconómicos)
+│       │   ├── fred.py                                # Extractor FRED (datos macroeconómicos + fallback CSV)
 │       │   └── __init__.py
 │       ├── models/                                    # Capa de modelado cuantitativo
+│       │   ├── metrics.py                             # Funciones puras compartidas de rentabilidad y riesgo
 │       │   ├── series.py                              # DataClass PriceSeries (series individuales)
 │       │   ├── portfolio.py                           # DataClass Portfolio (agregación, riesgos, reportes)
-│       │   ├── monte_carlo.py                         # Motor Monte Carlo y DataClass MonteCarloResult
+│       │   ├── monte_carlo.py                         # Motor Monte Carlo vectorizado y DataClass MonteCarloResult
 │       │   └── __init__.py
 │       └── utils/                                     # Capa de limpieza, alineación y validación
 │           ├── cleaning.py                            # Gestión de NaNs, forward-fill y alineación multicalendario
 │           ├── validation.py                          # Validación estructural estricta de invariantes (fail-fast)
 │           └── __init__.py
-├── pyproject.toml                                     # Configuración moderna de empaquetado pip/build
+├── tests/                                             # Suite de tests unitarios offline (sin conexión a red)
+│   └── test_toolkit.py                                # Tests ejecutables con unittest o pytest
+├── pyproject.toml                                     # Configuración moderna de empaquetado pip/build/ruff/pytest
 └── requirements.txt                                   # Dependencias fijadas del proyecto
 ```
 
@@ -431,21 +436,26 @@ T1/
 │   ├── setup.py                                       # Legacy setuptools file (do not use to install)
 │   └── toolkit/
 │       ├── __init__.py                                # Top-level package exports
+│       ├── logging_utils.py                           # Idempotent logging configuration (setup_logging)
+│       ├── reports.py                                 # Presentation layer: Markdown reports & Matplotlib charts
 │       ├── data/                                      # Ingestion layer & market connectors
 │       │   ├── base.py                                # Abstract interface (BaseDataExtractor)
 │       │   ├── yahoo.py                               # Yahoo Finance extractor (equities/indices)
-│       │   ├── fred.py                                # FRED extractor (macroeconomic series)
+│       │   ├── fred.py                                # FRED extractor (macroeconomic series + CSV fallback)
 │       │   └── __init__.py
 │       ├── models/                                    # Quantitative modeling layer
+│       │   ├── metrics.py                             # Shared pure return & risk calculation functions
 │       │   ├── series.py                              # PriceSeries DataClass (single asset series)
 │       │   ├── portfolio.py                           # Portfolio DataClass (aggregation, risk, reports)
-│       │   ├── monte_carlo.py                         # Monte Carlo engine & MonteCarloResult DataClass
+│       │   ├── monte_carlo.py                         # Vectorized Monte Carlo engine & MonteCarloResult DataClass
 │       │   └── __init__.py
 │       └── utils/                                     # Data cleaning, calendar alignment & validation
 │           ├── cleaning.py                            # Missing value imputation & multi-exchange alignment
 │           ├── validation.py                          # Strict structural invariant enforcement (fail-fast)
 │           └── __init__.py
-├── pyproject.toml                                     # Modern build system & dependency configuration
+├── tests/                                             # Offline unit test suite (no network required)
+│   └── test_toolkit.py                                # Runnable with unittest or pytest
+├── pyproject.toml                                     # Modern build system, ruff & pytest configuration
 └── requirements.txt                                   # Pinned dependency requirements
 ```
 

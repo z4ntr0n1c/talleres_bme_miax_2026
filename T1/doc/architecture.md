@@ -16,20 +16,39 @@ classDiagram
     class BaseDataExtractor {
         <<abstract>>
         +fetch_series(ticker: str, start: str, end: str, asset_type: str) PriceSeries*
-        +fetch_batch(tickers: List[str], start: str, end: str, asset_type: str) List[PriceSeries]*
-        #_standardize_dataframe(df: DataFrame) DataFrame*
+        +fetch_batch(tickers: Sequence[str], start: str, end: str, asset_type: str) list[PriceSeries]*
+        #_normalize_close_dataframe(df: DataFrame, close_col: str)$ DataFrame
     }
 
     class YahooFinanceExtractor {
         +fetch_series(ticker, start, end, asset_type) PriceSeries
-        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
-        #_standardize_dataframe(df) DataFrame
+        +fetch_batch(tickers, start, end, asset_type) list[PriceSeries]
+        #_standardize_dataframe(df)$ DataFrame
     }
 
     class FREDExtractor {
         +fetch_series(ticker, start, end, asset_type) PriceSeries
-        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
-        #_standardize_dataframe(df, ticker) DataFrame
+        +fetch_batch(tickers, start, end, asset_type) list[PriceSeries]
+        #_standardize_dataframe(df, ticker)$ DataFrame
+    }
+
+    class MetricsService {
+        <<module: models.metrics>>
+        +compute_annualized_return(mean_return, has_obs, trading_days)$ float
+        +compute_annualized_volatility(std_return, trading_days)$ float
+        +compute_sharpe_ratio(ann_return, ann_vol, rf)$ float
+        +compute_cumulative_returns(returns)$ Series
+        +compute_drawdown_series(returns)$ Series
+        +compute_max_drawdown(returns)$ float
+        +compute_value_at_risk(returns, conf, method)$ float
+        +compute_conditional_value_at_risk(returns, conf)$ float
+    }
+
+    class ReportsService {
+        <<module: reports>>
+        +build_portfolio_report(portfolio, rf, conf, output_path)$ str
+        +plot_portfolio_dashboard(portfolio, figsize, save_path, show)$ Tuple
+        +plot_monte_carlo(result, title, max_paths, conf, figsize, save_path, show)$ Tuple
     }
 
     class PriceSeries {
@@ -45,7 +64,8 @@ classDiagram
         +cumulative_returns() Series
         +drawdown_series() Series
         +max_drawdown() float
-        +value_at_risk(conf) float
+        +value_at_risk(conf, method) float
+        +conditional_value_at_risk(conf) float
         +simulate_montecarlo(n_sims, horizon) MonteCarloResult
         +plot_montecarlo() Figure
     }
@@ -127,6 +147,8 @@ classDiagram
     BaseDataExtractor ..> PriceSeries : instantiates
     Portfolio o-- "1..*" PriceSeries : aggregates
 
+    PriceSeries ..> MetricsService : delegates metrics
+    Portfolio ..> MetricsService : delegates metrics
     Portfolio ..> ValidationUtils : validates structural invariants
     Portfolio ..> DataCleaningUtils : synchronizes calendars
 
@@ -134,6 +156,8 @@ classDiagram
     PriceSeries ..> MonteCarloEngine : executes asset projection
 
     MonteCarloEngine ..> MonteCarloResult : constructs
+    Portfolio ..> ReportsService : delegates Markdown & 2x2 dashboard
+    MonteCarloResult ..> ReportsService : delegates plots
 ```
 
 ---
