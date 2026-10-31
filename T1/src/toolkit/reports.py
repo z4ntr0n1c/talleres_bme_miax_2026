@@ -93,7 +93,7 @@ def build_portfolio_report(
 |---|---|---|
 | **Cumulative Return** | **{cum_ret:+.2%}** | Total compound growth over the observation period |
 | **Annualized Return** | **{ann_ret:+.2%}** | Geometric annualized expected compound rate |
-| **Annualized Volatility** | **{ann_vol:.2%}** | Annualized standard deviation ($\\sigma \\times \\sqrt{{252}}$) |
+| **Annualized Volatility** | **{ann_vol:.2%}** | Annualized standard deviation (σ × √252) |
 | **Sharpe Ratio (Rf={risk_free_rate:.1%})** | **{sharpe:.2f}** | Excess return per unit of volatility |
 | **Maximum Drawdown** | **{max_dd:.2%}** | Maximum peak-to-trough decline |
 | **Historical Daily VaR ({conf_pct}%)** | **{hist_var:.2%}** | Maximum expected daily loss at {conf_pct}% confidence (Empirical) |

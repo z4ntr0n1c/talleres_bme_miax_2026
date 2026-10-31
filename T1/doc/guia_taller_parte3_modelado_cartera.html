@@ -98,6 +98,10 @@
       color: #1e40af;
       font-weight: 600;
     }
+    math {
+      font-family: "Latin Modern Math", "STIX Two Math", "Cambria Math", "DejaVu Math TeX Gyre", serif;
+      font-size: 10.5pt;
+    }
   </style>
 </head>
 <body>
@@ -108,8 +112,8 @@
   <h2>1. Fundamentos Arquitectónicos: DataClass Portfolio</h2>
   <p>La clase <code>Portfolio</code> (en <code>src/toolkit/models/portfolio.py</code>) encapsula la agregación de múltiples activos <code>PriceSeries</code>, gestionando de forma flexible sus ponderaciones:</p>
   <ul>
-    <li><strong>Equiponderación automática</strong>: Asigna $w_i = 1/N$ cuando no se proporcionan pesos explícitos.</li>
-    <li><strong>Asignación por diccionario</strong>: Mapeo explícito <code>{"AAPL": 0.35, "MSFT": 0.35, ...}</code>, verificando la correspondencia con los activos y normalizando la suma a $1.0$.</li>
+    <li><strong>Equiponderación automática</strong>: Asigna <math><msub><mi>w</mi><mi>i</mi></msub><mo>=</mo><mn>1</mn><mo>/</mo><mi>N</mi></math> cuando no se proporcionan pesos explícitos.</li>
+    <li><strong>Asignación por diccionario</strong>: Mapeo explícito <code>{"AAPL": 0.35, "MSFT": 0.35, ...}</code>, verificando la correspondencia con los activos y normalizando la suma a <math><mn>1.0</mn></math>.</li>
     <li><strong>Sincronización multicalendario</strong>: Alineación temporal por fechas comunes entre mercados con distintos calendarios bursátiles (p. ej., Wall Street vs. Bolsa de Madrid).</li>
   </ul>
 
@@ -134,32 +138,32 @@ self.correlation_matrix = self.returns_df.corr()</code></pre>
     <tbody>
       <tr>
         <td><code>annualized_return()</code></td>
-        <td>$(1 + \mu)^{252} - 1$</td>
+        <td><math><msup><mrow><mo>(</mo><mn>1</mn><mo>+</mo><mi>&mu;</mi><mo>)</mo></mrow><mn>252</mn></msup><mo>&minus;</mo><mn>1</mn></math></td>
         <td>Tasa geométrica anualizada compuesta</td>
       </tr>
       <tr>
         <td><code>annualized_volatility()</code></td>
-        <td>$\sigma_{\text{diaria}} \times \sqrt{252}$</td>
+        <td><math><msub><mi>&sigma;</mi><mtext>diaria</mtext></msub><mo>&times;</mo><msqrt><mn>252</mn></msqrt></math></td>
         <td>Dispersión anualizada del rendimiento</td>
       </tr>
       <tr>
         <td><code>sharpe_ratio(rf)</code></td>
-        <td>$(\mu_{\text{anual}} - R_f) / \sigma_{\text{anual}}$</td>
+        <td><math><mrow><mo>(</mo><msub><mi>&mu;</mi><mtext>anual</mtext></msub><mo>&minus;</mo><msub><mi>R</mi><mi>f</mi></msub><mo>)</mo></mrow><mo>/</mo><msub><mi>&sigma;</mi><mtext>anual</mtext></msub></math></td>
         <td>Exceso de retorno por unidad de volatilidad</td>
       </tr>
       <tr>
         <td><code>max_drawdown()</code></td>
-        <td>$\min \left( \frac{W_t - \max_{s \le t} W_s}{\max_{s \le t} W_s} \right)$</td>
+        <td><math><munder><mo>min</mo><mi>t</mi></munder><mrow><mo>(</mo><mfrac><mrow><msub><mi>W</mi><mi>t</mi></msub><mo>&minus;</mo><msub><mo>max</mo><mrow><mi>s</mi><mo>&le;</mo><mi>t</mi></mrow></msub><msub><mi>W</mi><mi>s</mi></msub></mrow><mrow><msub><mo>max</mo><mrow><mi>s</mi><mo>&le;</mo><mi>t</mi></mrow></msub><msub><mi>W</mi><mi>s</mi></msub></mrow></mfrac><mo>)</mo></mrow></math></td>
         <td>Máxima caída acumulada desde máximos históricos</td>
       </tr>
       <tr>
         <td><code>value_at_risk(0.95)</code></td>
-        <td>Quantil histórico o analítico gaussiano ($z = -1.645$)</td>
+        <td>Cuantil histórico o analítico gaussiano (<math><mi>z</mi><mo>=</mo><mo>&minus;</mo><mn>1.645</mn></math>)</td>
         <td>Pérdida máxima diaria esperada al 95% de confianza</td>
       </tr>
       <tr>
         <td><code>conditional_value_at_risk(0.95)</code></td>
-        <td>$\mathbb{E}[R_p \mid R_p \le \text{VaR}_{0.95}]$</td>
+        <td><math><mi>&Eopf;</mi><mrow><mo>[</mo><msub><mi>R</mi><mi>p</mi></msub><mo>&#x2223;</mo><msub><mi>R</mi><mi>p</mi></msub><mo>&le;</mo><msub><mtext>VaR</mtext><mn>0.95</mn></msub><mo>]</mo></mrow></math></td>
         <td>CVaR / Expected Shortfall (pérdida media en la cola)</td>
       </tr>
     </tbody>

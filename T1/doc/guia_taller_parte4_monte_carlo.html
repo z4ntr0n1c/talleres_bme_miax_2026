@@ -54,14 +54,14 @@
     }
     pre {
       font-family: "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
-      font-size: 8.8pt;
+      font-size: 8.6pt;
       background-color: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 5px;
       padding: 7px 10px;
       margin: 5px 0 8px 0;
-      white-space: pre;
-      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
     .terminal-box {
       background-color: #18181b;
@@ -97,6 +97,18 @@
       color: #1e40af;
       font-weight: 600;
     }
+    math {
+      font-family: "Latin Modern Math", "STIX Two Math", "Cambria Math", "DejaVu Math TeX Gyre", serif;
+      font-size: 10.5pt;
+    }
+    .formula-box {
+      background-color: #f8fafc;
+      border-left: 3px solid #2563eb;
+      border-radius: 4px;
+      padding: 6px 12px;
+      margin: 5px 0 6px 0;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -105,13 +117,43 @@
   <div class="subtitle">MIAX - BME | Modelado GBM, Descomposición de Cholesky y Simulación de Trayectorias de Cartera</div>
 
   <h2>1. Formulación Matemática de la Difusión Estocástica</h2>
-  <p>El motor implementa dos modelos analíticos de difusión para proyectar precios y riqueza a horizonte $T$:</p>
+  <p>El motor implementa dos modelos analíticos de difusión para proyectar precios y riqueza a horizonte <math><mi>T</mi></math>:</p>
   <ul>
     <li><strong>Movimiento Browniano Geométrico (GBM Univariante)</strong>:
-      $$S_{t+1} = S_t \exp\left( \left(\mu - \frac{1}{2}\sigma^2\right) \Delta t + \sigma \sqrt{\Delta t} Z \right), \quad Z \sim \mathcal{N}(0, 1)$$
+      <div class="formula-box">
+        <math display="block">
+          <msub><mi>S</mi><mrow><mi>t</mi><mo>+</mo><mn>1</mn></mrow></msub>
+          <mo>=</mo>
+          <msub><mi>S</mi><mi>t</mi></msub>
+          <mo>exp</mo>
+          <mrow>
+            <mo>(</mo>
+            <mrow>
+              <mo>(</mo>
+              <mi>&mu;</mi>
+              <mo>&minus;</mo>
+              <mfrac><mn>1</mn><mn>2</mn></mfrac>
+              <msup><mi>&sigma;</mi><mn>2</mn></msup>
+              <mo>)</mo>
+            </mrow>
+            <mi>&Delta;</mi><mi>t</mi>
+            <mo>+</mo>
+            <mi>&sigma;</mi>
+            <msqrt><mrow><mi>&Delta;</mi><mi>t</mi></mrow></msqrt>
+            <mspace width="0.15em"></mspace>
+            <mi>Z</mi>
+            <mo>)</mo>
+          </mrow>
+          <mo>,</mo>
+          <mspace width="1.2em"></mspace>
+          <mi>Z</mi>
+          <mo>&sim;</mo>
+          <mi>&Nscr;</mi><mrow><mo>(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo>)</mo></mrow>
+        </math>
+      </div>
     </li>
     <li><strong>GBM Multivariante Correlado (Descomposición de Cholesky)</strong>:
-      Para carteras de $N$ activos con matriz de covarianzas $\boldsymbol{\Sigma}$, se calcula el factor triangular inferior $\boldsymbol{L}$ tal que $\boldsymbol{\Sigma} = \boldsymbol{L}\boldsymbol{L}^T$. Los choques correlados se obtienen como $\boldsymbol{Z}_{\text{corr}} = \boldsymbol{L} \boldsymbol{Z}$, preservando la estructura empírica de dependencias cruzadas.
+      Para carteras de <math><mi>N</mi></math> activos con matriz de covarianzas <math><mi mathvariant="bold">&Sigma;</mi></math>, se calcula el factor triangular inferior <math><mi mathvariant="bold-italic">L</mi></math> tal que <math><mi mathvariant="bold">&Sigma;</mi><mo>=</mo><mi mathvariant="bold-italic">L</mi><msup><mi mathvariant="bold-italic">L</mi><mi mathvariant="normal">T</mi></msup></math>. Los choques correlados se obtienen como <math><msub><mi mathvariant="bold-italic">Z</mi><mtext>corr</mtext></msub><mo>=</mo><mi mathvariant="bold-italic">L</mi><mi mathvariant="bold-italic">Z</mi></math>, preservando la estructura empírica de dependencias cruzadas.
     </li>
   </ul>
 
@@ -123,20 +165,25 @@ step_log_returns = drift_vector[np.newaxis, :, np.newaxis] + (chol @ uncorrelate
 asset_wealth_paths = (initial_capital * weights[np.newaxis, :, np.newaxis]) * np.exp(
     np.cumsum(step_log_returns, axis=0)
 )
-portfolio_wealth = np.vstack([np.full((1, n_simulations), initial_capital), asset_wealth_paths.sum(axis=1)])</code></pre>
+portfolio_wealth = np.vstack([
+    np.full((1, n_simulations), initial_capital),
+    asset_wealth_paths.sum(axis=1),
+])</code></pre>
   <p>La DataClass <code>MonteCarloResult</code> almacena las trayectorias, calcula métricas terminales y delega la visualización gráfica en <code>src/toolkit/reports.py</code> (<code>plot_monte_carlo</code>):</p>
   <ul>
     <li><code>terminal_mean</code> y <code>terminal_median</code>: Capital esperado y mediano a vencimiento.</li>
-    <li><code>probability_of_loss</code>: Fracción de trayectorias donde el capital final es inferior al inicial ($S_T < S_0$).</li>
+    <li><code>probability_of_loss</code>: Fracción de trayectorias donde el capital final es inferior al inicial (<math><msub><mi>S</mi><mi>T</mi></msub><mo>&lt;</mo><msub><mi>S</mi><mn>0</mn></msub></math>).</li>
     <li><code>terminal_var(0.95)</code> y <code>terminal_cvar(0.95)</code>: Cota de pérdida máxima y pérdida media en la cola en unidades monetarias.</li>
   </ul>
 
   <h2>3. Integración en Cartera y Visualización Gráfica</h2>
   <p>El motor se integra directamente en <code>Portfolio</code> y <code>PriceSeries</code> mediante los métodos:</p>
   <pre><code># Simulación directa en la cartera (semilla reproducible opcional)
-mc_result = portfolio.simulate_montecarlo(n_simulations=2500, horizon=252, seed=123, multivariate=True)
+mc_result = portfolio.simulate_montecarlo(
+    n_simulations=2500, horizon=252, seed=123, multivariate=True
+)
 
-# Visualización delegada en toolkit.reports (cono estocástico + distribución terminal con VaR)
+# Visualización delegada en toolkit.reports (cono estocástico + distribución terminal)
 mc_result.plot(save_path="examples/plots/mc_portfolio_multivariate.png", show=False)</code></pre>
 
   <h2>4. Verificación y Resultados de Ejecución</h2>
