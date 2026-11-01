@@ -22,6 +22,3 @@ reports/
 # el resto (settings.local.json, caché, etc.) es local de cada usuario
 .claude/*
 !.claude/skills/
-
-# Other 
-T1_1/

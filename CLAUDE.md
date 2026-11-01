@@ -19,11 +19,10 @@ Hay dos entornos válidos; **no instales paquetes globalmente**.
 
 | Entorno | Ruta del intérprete | Uso |
 |---|---|---|
-| venv local (preferido para T1) | `T1/.venv/bin/python` (Python 3.11) | Toolkit, ejemplos, pandas/seaborn |
+| venv local (preferido para T1) | `.venv/bin/python` (Python 3.11) | Toolkit, ejemplos, tests |
 | conda `MIAX15` | `~/anaconda3/envs/MIAX15/bin/python` | Intérprete por defecto del workspace (VS Code), notebooks y deep learning |
 
 ```bash
-cd T1
 source .venv/bin/activate            # o: conda activate MIAX15
 pip install -e .                      # instala `toolkit` en modo editable (src-layout)
 # alternativa sólo dependencias:
@@ -31,13 +30,13 @@ pip install -r requirements.txt
 ```
 
 - Invoca siempre el intérprete explícito (`.venv/bin/python ...`) en comandos no interactivos.
-- Dependencias núcleo (`pyproject.toml` / `requirements.txt`): `yfinance`, `pandas>=2`, `numpy`, `matplotlib`, `pandas-datareader`. Si añades una dependencia, actualiza **ambos** ficheros.
+- Dependencias núcleo (`pyproject.toml` / `requirements.txt`): `yfinance`, `pandas>=2`, `numpy`, `matplotlib`, `pandas-datareader`, `requests`. Si añades una dependencia, actualiza **ambos** ficheros.
 - Matplotlib en modo headless: usa `matplotlib.use("Agg")` y, si `~/.config/matplotlib` no es escribible, exporta `MPLCONFIGDIR` a un directorio local.
 
 ## Estructura
 
 ```
-T1/
+Taller-T1-B1/
 ├── src/toolkit/
 │   ├── __init__.py       # API pública y __version__
 │   ├── logging_utils.py  # setup_logging() idempotente
@@ -66,10 +65,10 @@ API pública exportada en `src/toolkit/__init__.py`; si añades una clase/funci�
 
 ## Ejecutar y probar
 
-No hay suite `pytest`; la validación se hace con los scripts de `examples/` (requieren **red** para Yahoo/FRED):
+Suite de tests unitarios offline (`tests/test_toolkit.py`) y scripts de validación en `examples/` (estos últimos requieren **red** para Yahoo/FRED):
 
 ```bash
-cd T1
+.venv/bin/python -m unittest discover -s tests -v        # Suite unitaria offline (sin red)
 .venv/bin/python examples/test_fetch.py                  # Yahoo: serie individual y batch
 .venv/bin/python examples/test_fetch_fred.py             # FRED: series macro
 .venv/bin/python examples/test_portfolio.py              # Cartera, métricas, correlación/covarianza
@@ -83,8 +82,8 @@ cd T1
 
 ## Git y ficheros ignorados
 
-- `.gitignore` excluye: `.venv/`, `__pycache__/`, `*.egg-info/`, `data/`, `reports/`, `*.png`, `.vscode/` y `.claude/` **excepto** `.claude/skills/`, que se comparte.
-- Las skills de arquitectura comunes a todos los talleres están en `../.claude/skills/` (raíz del repo); consúltalas antes de diseñar código nuevo.
+- `.gitignore` excluye: `.venv/`, `__pycache__/`, `*.egg-info/`, `reports/`, `*.png`, `.vscode/` y `.claude/` **excepto** `.claude/skills/`, que se comparte.
+- Las skills de arquitectura comunes están en `.claude/skills/`; consúltalas antes de diseñar código nuevo.
 - Commits estilo convencional: `feat: ...`, `fix: ...`, `docs: ...`.
 - No subas datos descargados, credenciales ni API keys (usa variables de entorno).
 
