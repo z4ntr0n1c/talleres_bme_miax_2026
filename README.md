@@ -1,13 +1,11 @@
-# talleres_bme_miax_2026
-Talleres del Master MIAX de BME - Edicion 15
+# taller_T1-B1_bme_miax_2026
+Taller B1 - T1 del Master MIAX de BME - Edicion 15 - 2026
 
 ## Estructura
 
 | Carpeta | Contenido |
 |---|---|
 | [`T1/`](T1/) | Toolkit de datos financieros (ingesta, carteras, Monte Carlo, reportes) |
-| [`T1_1/`](T1_1/) | Ejercicio guiado en notebook: *Hues and Cues* (percepción del color) |
-| [`T2/`](T2/) | Taller 2 (en preparación) |
 | [`.claude/skills/`](.claude/skills/) | Skills compartidas de arquitectura de software para asistentes de IA |
 
 ## Skills de arquitectura (`.claude/skills/`)
