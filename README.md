@@ -15,12 +15,14 @@ Este proyecto implementa una toolbox profesional en Python para la ingesta, esta
 
 El diseño sigue una arquitectura modular y desacoplada mediante patrones de diseño orientados a objetos y **DataClasses**, separando estrictamente la capa de extracción de la capa de análisis, modelos, preprocesado y motores de diagnóstico y simulación estocástica.
 
-### Estructura del repositorio taller 
+### Estructura del repositorio
 
 ```
-T1/
+Taller-T1-B1/
+├── .claude/skills/                                    # Skills de arquitectura reutilizables para agentes IA
 ├── doc/                                               # Guías, especificaciones y material documental del taller
-│   ├── Taller_B1_T1.pdf                               # Diapositivas y enunciado oficial del taller
+│   ├── Taller_B1_T1.pdf                               # Enunciado oficial del taller
+│   ├── Taller_1_B1_Toolbox_Financiera.pptx            # Presentación de diapositivas de la toolbox
 │   ├── architecture.md                                # Especificación técnica formal y diagramas UML/flujo
 │   ├── guia_taller_parte1_git_ssh.html / .pdf         # Guía Parte 1: Configuración de Git & SSH
 │   ├── guia_taller_parte2_arquitectura_extraccion.*   # Guía Parte 2: Arquitectura, entorno y capa de extracción
@@ -33,17 +35,12 @@ T1/
 │   ├── test_portfolio.py                              # Construcción, métricas de riesgo y diagnóstico de Cartera
 │   ├── test_monte_carlo.py                            # Motor Monte Carlo univariante y multivariante (Cholesky)
 │   ├── test_reports_and_cleaning.py                   # Validación fail-fast, reporte Markdown y dashboard 2x2
-│   ├── plots/                                         # Gráficos generados (.png)
-│   │   ├── mc_aapl.png                                # Simulación GBM individual (conos y distribución terminal)
-│   │   ├── mc_portfolio_multivariate.png              # Simulación multivariante correlada (Cholesky)
-│   │   ├── mc_portfolio_aggregate.png                 # Simulación agregada de cartera
-│   │   └── portfolio_dashboard.png                    # Cuadro de mando 2x2 (rendimiento, drawdown, corr, VaR)
-│   └── reports/                                       # Informes cuantitativos generados
-│       └── portfolio_report.md                        # Informe ejecutivo exportado en Markdown
-├── src/                                               # Código fuente del paquete
+│   ├── plots/                                         # Gráficos generados (.png, ignorados en git)
+│   └── reports/                                       # Informes cuantitativos generados (.md, ignorados en git)
+├── src/                                               # Código fuente del paquete (src-layout)
 │   ├── setup.py                                       # Legado setuptools (no usar para instalar)
 │   └── toolkit/
-│       ├── __init__.py                                # Exportaciones de primer nivel
+│       ├── __init__.py                                # Exportaciones de primer nivel (__all__)
 │       ├── logging_utils.py                           # Configuración idempotente de logging (setup_logging)
 │       ├── reports.py                                 # Capa de presentación: informes Markdown y gráficos Matplotlib
 │       ├── data/                                      # Capa de ingesta y conectores de mercado
@@ -63,6 +60,7 @@ T1/
 │           └── __init__.py
 ├── tests/                                             # Suite de tests unitarios offline (sin conexión a red)
 │   └── test_toolkit.py                                # Tests ejecutables con unittest o pytest
+├── CLAUDE.md                                          # Guía de contexto y convenciones para asistentes IA
 ├── pyproject.toml                                     # Configuración moderna de empaquetado pip/build/ruff/pytest
 └── requirements.txt                                   # Dependencias fijadas del proyecto
 ```
@@ -75,7 +73,7 @@ El repositorio cuenta con un catálogo exhaustivo de documentación técnica y g
 
 | Documento | Formatos | Descripción y Contenidos Clave |
 |---|:---:|---|
-| **Enunciado y Diapositivas Oficiales** | [`PDF`](doc/Taller_B1_T1.pdf) | Requisitos formales, bloques de entrega del taller B1 y criterios de evaluación. |
+| **Enunciado y Presentación del Taller** | [`PDF`](doc/Taller_B1_T1.pdf) · [`PPTX`](doc/Taller_1_B1_Toolbox_Financiera.pptx) | Requisitos formales, bloques de entrega del taller B1, presentación ejecutiva y criterios de evaluación. |
 | **Especificación de Arquitectura y UML** | [`Markdown`](doc/architecture.md) | Diagramas UML formales, flujo de datos por capas, patrones de diseño aplicados y contratos de interfaz. |
 | **Parte 1 — Git y Configuración SSH** | [`HTML`](doc/guia_taller_parte1_git_ssh.html) · [`PDF`](doc/guia_taller_parte1_git_ssh.pdf) | Configuración de claves SSH Ed25519, vinculación con GitHub, clonación del repositorio y buenas prácticas de control de versiones. |
 | **Parte 2 — Arquitectura y Extracción** | [`HTML`](doc/guia_taller_parte2_arquitectura_extraccion.html) · [`PDF`](doc/guia_taller_parte2_arquitectura_extraccion.pdf) | Configuración de virtualenv, jerarquía `BaseDataExtractor`, conectores `YahooFinanceExtractor` y `FREDExtractor`, y `PriceSeries`. |
@@ -96,20 +94,20 @@ classDiagram
     class BaseDataExtractor {
         <<abstract>>
         +fetch_series(ticker: str, start: str, end: str, asset_type: str) PriceSeries*
-        +fetch_batch(tickers: List[str], start: str, end: str, asset_type: str) List[PriceSeries]*
-        #_standardize_dataframe(df: DataFrame) DataFrame*
+        +fetch_batch(tickers: Sequence[str], start: str, end: str, asset_type: str) list[PriceSeries]*
+        +_normalize_close_dataframe(df: DataFrame, close_col: str)$ DataFrame
     }
 
     class YahooFinanceExtractor {
         +fetch_series(ticker, start, end, asset_type) PriceSeries
-        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
-        #_standardize_dataframe(df) DataFrame
+        +fetch_batch(tickers, start, end, asset_type) list[PriceSeries]
+        +_standardize_dataframe(df)$ DataFrame
     }
 
     class FREDExtractor {
         +fetch_series(ticker, start, end, asset_type) PriceSeries
-        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
-        #_standardize_dataframe(df, ticker) DataFrame
+        +fetch_batch(tickers, start, end, asset_type) list[PriceSeries]
+        +_standardize_dataframe(df, ticker)$ DataFrame
     }
 
     class PriceSeries {
@@ -128,14 +126,15 @@ classDiagram
         +drawdown_series() Series
         +max_drawdown() float
         +value_at_risk(conf) float
+        +conditional_value_at_risk(conf) float
         +simulate_montecarlo(n_sims, horizon) MonteCarloResult
         +plot_montecarlo() Figure
     }
 
     class Portfolio {
         <<dataclass>>
-        +List~PriceSeries~ assets
-        +Union~Dict,List,None~ weights
+        +list~PriceSeries~ assets
+        +Union~Dict,Sequence,None~ weights
         +str name
         +float initial_capital
         +Dict~str,float~ weights_dict
@@ -165,6 +164,25 @@ classDiagram
         +plots_report(figsize, save_path) Figure
     }
 
+    class MetricsUtils {
+        <<utility>>
+        +compute_annualized_return(returns, trading_days)$ float
+        +compute_annualized_volatility(returns, trading_days)$ float
+        +compute_sharpe_ratio(returns, rf, trading_days)$ float
+        +compute_cumulative_returns(returns)$ Series
+        +compute_drawdown_series(returns)$ Series
+        +compute_max_drawdown(returns)$ float
+        +compute_value_at_risk(returns, conf, method)$ float
+        +compute_conditional_value_at_risk(returns, conf)$ float
+    }
+
+    class ReportsLayer {
+        <<presentation>>
+        +build_portfolio_report(portfolio, rf, conf, output_path)$ str
+        +plot_portfolio_dashboard(portfolio, figsize, save_path, show)$ Figure
+        +plot_monte_carlo(result, title, max_paths, conf, figsize, save_path, show)$ Figure
+    }
+
     class MonteCarloEngine {
         <<service>>
         +simulate_gbm(S0, mu, sigma, horizon, n_sims, dt, seed)$ MonteCarloResult
@@ -184,9 +202,9 @@ classDiagram
         +ndarray terminal_values
         +float terminal_mean
         +float terminal_median
-        +float terminal_var
-        +float terminal_cvar
         +float probability_of_loss
+        +terminal_var(conf) float
+        +terminal_cvar(conf) float
         +plot(figsize, save_path) Figure
     }
 
@@ -207,25 +225,33 @@ classDiagram
     BaseDataExtractor <|-- FREDExtractor : implements
     BaseDataExtractor ..> PriceSeries : creates
     Portfolio o-- "1..*" PriceSeries : aggregates
+    PriceSeries ..> MetricsUtils : delegates
+    Portfolio ..> MetricsUtils : delegates
     Portfolio ..> ValidationUtils : validates
     Portfolio ..> CleaningUtils : aligns
     Portfolio ..> MonteCarloEngine : delegates
     PriceSeries ..> MonteCarloEngine : delegates
     MonteCarloEngine ..> MonteCarloResult : produces
+    Portfolio ..> ReportsLayer : delegates
+    MonteCarloResult ..> ReportsLayer : delegates
 ```
 
 #### Diagrama de Flujo de Datos
 
 ```mermaid
 flowchart LR
-    A[Market APIs<br>Yahoo / FRED] --> B[Extractors<br>BaseDataExtractor]
-    B --> C[PriceSeries<br>DataClass]
-    C --> D[Validation & Cleaning<br>utils layer]
-    D --> E[Portfolio<br>Aggregation]
-    E --> F[MonteCarloEngine<br>GBM / Cholesky]
-    F --> G[MonteCarloResult<br>Cones & Stats]
-    E --> H[Portfolio.report<br>Markdown Report]
-    E --> I[Portfolio.plots_report<br>2x2 Dashboard]
+    A["Market APIs (Yahoo / FRED)"] --> B["Extractors (BaseDataExtractor)"]
+    B --> C["PriceSeries (DataClass)"]
+    C --> D["Validation & Cleaning (utils)"]
+    D --> E["Portfolio (Aggregation)"]
+    C --> M["Metrics (models.metrics)"]
+    E --> M
+    E --> F["MonteCarloEngine (GBM / Cholesky)"]
+    F --> G["MonteCarloResult (Cones & Stats)"]
+    E --> R["ReportsLayer (toolkit.reports)"]
+    G --> R
+    R --> H["Markdown Report (.md)"]
+    R --> I["Visual Dashboards (.png)"]
 ```
 
 Consulte el documento extendido de diseño en [`doc/architecture.md`](doc/architecture.md).
@@ -309,29 +335,25 @@ Un `dataclass` que agrega múltiples activos `PriceSeries`, gestiona sus pondera
 #### 1. Crear y activar el entorno virtual
 
 ```bash
-cd T1
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
 #### 2. Instalar el paquete en modo editable
 
-Desde la raíz `T1/` (donde está `pyproject.toml`; el paquete usa *src-layout*):
+Desde la raíz del repositorio (donde se encuentra `pyproject.toml`; el paquete emplea *src-layout*):
 
 ```bash
+pip install --upgrade pip
+pip install -r requirements.txt
 pip install -e .
 ```
 
-Comprobación rápida:
+Comprobación rápida de importación y ejecución de la suite de tests unitarios offline:
 
 ```bash
 python -c "import toolkit; print(toolkit.__all__)"
-```
-
-O instalar las dependencias directamente:
-
-```bash
-pip install -r requirements.txt
+python -m unittest discover -s tests -v
 ```
 
 ---
@@ -375,7 +397,8 @@ mc = portfolio.simulate_montecarlo(n_simulations=2000, horizon=252)
 mc.plot(save_path="examples/plots/mc_portfolio_multivariate.png", show=False)
 ```
 
-Ejecuta los scripts de prueba completos:
+Ejecuta la suite de tests unitarios offline y los scripts de validación con datos reales:
+- `python -m unittest discover -s tests -v` *(suite unitaria offline sin red)*
 - `python examples/test_fetch.py`
 - `python examples/test_fetch_fred.py`
 - `python examples/test_portfolio.py`
@@ -393,6 +416,7 @@ Ejecuta los scripts de prueba completos:
 | `numpy` | ≥ 1.24.0 | Operaciones algebraicas, Cholesky y simulación vectorizada |
 | `matplotlib` | ≥ 3.7.0 | Visualizaciones gráficas, dashboards analíticos y conos MC |
 | `pandas-datareader` | ≥ 0.10.0 | Conexión con la API de FRED (datos macroeconómicos) |
+| `requests` | ≥ 2.31.0 | Cliente HTTP para descarga directa de respaldo (`fredgraph.csv`) |
 
 ---
 
@@ -410,32 +434,29 @@ The architecture emphasizes clean object-oriented design and **DataClasses**, cl
 ### Repository Structure
 
 ```
-T1/
+Taller-T1-B1/
+├── .claude/skills/                                    # Reusable architecture skills for AI coding agents
 ├── doc/                                               # Workshop guides, formal specs & slide decks
-│   ├── Taller_B1_T1.pdf                               # Assignment slides & official specification
+│   ├── Taller_B1_T1.pdf                               # Official assignment specification
+│   ├── Taller_1_B1_Toolbox_Financiera.pptx            # Financial Toolbox presentation slide deck
 │   ├── architecture.md                                # Formal architecture specification & UML diagrams
 │   ├── guia_taller_parte1_git_ssh.html / .pdf         # Part 1 Guide: Git & SSH configuration
 │   ├── guia_taller_parte2_arquitectura_extraccion.*   # Part 2 Guide: Architecture, environment & extraction
 │   ├── guia_taller_parte3_modelado_cartera.html / .pdf# Part 3 Guide: Quantitative modeling & portfolio
 │   ├── guia_taller_parte4_monte_carlo.html / .pdf     # Part 4 Guide: Monte Carlo engine & diffusion
 │   └── guia_taller_parte5_limpieza_reportes.html /.pdf# Part 5 Guide: Preprocessing, validation & dashboard
-├── examples/                                          # Execution scripts, unit tests & demonstrations
+├── examples/                                          # Execution scripts, validations & demonstrations
 │   ├── test_fetch.py                                  # Single & batch fetch (Yahoo Finance)
 │   ├── test_fetch_fred.py                             # Macro data extraction (FRED)
 │   ├── test_portfolio.py                              # Portfolio creation, risk metrics & diagnostics
 │   ├── test_monte_carlo.py                            # Univariate & multivariate (Cholesky) Monte Carlo
 │   ├── test_reports_and_cleaning.py                   # Fail-fast validation, Markdown report & 2x2 dashboard
-│   ├── plots/                                         # Exported simulation & dashboard figures (.png)
-│   │   ├── mc_aapl.png                                # Single-asset GBM cone & terminal distribution
-│   │   ├── mc_portfolio_multivariate.png              # Correlated multivariate Cholesky simulation
-│   │   ├── mc_portfolio_aggregate.png                 # Aggregate portfolio simulation
-│   │   └── portfolio_dashboard.png                    # 4-panel visual dashboard (returns, dd, corr, VaR)
-│   └── reports/                                       # Exported Markdown quantitative reports
-│       └── portfolio_report.md                        # Generated executive Markdown report
-├── src/                                               # Package source code
+│   ├── plots/                                         # Exported simulation & dashboard figures (.png, git-ignored)
+│   └── reports/                                       # Exported Markdown quantitative reports (.md, git-ignored)
+├── src/                                               # Package source code (src-layout)
 │   ├── setup.py                                       # Legacy setuptools file (do not use to install)
 │   └── toolkit/
-│       ├── __init__.py                                # Top-level package exports
+│       ├── __init__.py                                # Top-level package exports (__all__)
 │       ├── logging_utils.py                           # Idempotent logging configuration (setup_logging)
 │       ├── reports.py                                 # Presentation layer: Markdown reports & Matplotlib charts
 │       ├── data/                                      # Ingestion layer & market connectors
@@ -455,6 +476,7 @@ T1/
 │           └── __init__.py
 ├── tests/                                             # Offline unit test suite (no network required)
 │   └── test_toolkit.py                                # Runnable with unittest or pytest
+├── CLAUDE.md                                          # AI assistant context & architectural guidelines
 ├── pyproject.toml                                     # Modern build system, ruff & pytest configuration
 └── requirements.txt                                   # Pinned dependency requirements
 ```
@@ -467,7 +489,7 @@ The repository features an exhaustive documentation suite and step-by-step techn
 
 | Document | Formats | Overview & Core Topics |
 |---|:---:|---|
-| **Official Assignment & Slide Deck** | [`PDF`](doc/Taller_B1_T1.pdf) | Formal workshop requirements, assignment blocks, and academic evaluation criteria. |
+| **Official Assignment & Slide Deck** | [`PDF`](doc/Taller_B1_T1.pdf) · [`PPTX`](doc/Taller_1_B1_Toolbox_Financiera.pptx) | Formal workshop requirements, assignment blocks, executive presentation, and academic evaluation criteria. |
 | **Architecture & Formal UML Specification** | [`Markdown`](doc/architecture.md) | Formal UML class diagrams, layered dataflow, design patterns, and interface contracts. |
 | **Part 1 — Git & SSH Configuration** | [`HTML`](doc/guia_taller_parte1_git_ssh.html) · [`PDF`](doc/guia_taller_parte1_git_ssh.pdf) | Ed25519 SSH key generation, GitHub linkage, repository cloning, and version control best practices. |
 | **Part 2 — Architecture, Environment & Extraction** | [`HTML`](doc/guia_taller_parte2_arquitectura_extraccion.html) · [`PDF`](doc/guia_taller_parte2_arquitectura_extraccion.pdf) | Virtualenv setup, `BaseDataExtractor` abstract hierarchy, `YahooFinanceExtractor`, `FREDExtractor`, and `PriceSeries`. |
@@ -488,20 +510,20 @@ classDiagram
     class BaseDataExtractor {
         <<abstract>>
         +fetch_series(ticker: str, start: str, end: str, asset_type: str) PriceSeries*
-        +fetch_batch(tickers: List[str], start: str, end: str, asset_type: str) List[PriceSeries]*
-        #_standardize_dataframe(df: DataFrame) DataFrame*
+        +fetch_batch(tickers: Sequence[str], start: str, end: str, asset_type: str) list[PriceSeries]*
+        +_normalize_close_dataframe(df: DataFrame, close_col: str)$ DataFrame
     }
 
     class YahooFinanceExtractor {
         +fetch_series(ticker, start, end, asset_type) PriceSeries
-        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
-        #_standardize_dataframe(df) DataFrame
+        +fetch_batch(tickers, start, end, asset_type) list[PriceSeries]
+        +_standardize_dataframe(df)$ DataFrame
     }
 
     class FREDExtractor {
         +fetch_series(ticker, start, end, asset_type) PriceSeries
-        +fetch_batch(tickers, start, end, asset_type) List[PriceSeries]
-        #_standardize_dataframe(df, ticker) DataFrame
+        +fetch_batch(tickers, start, end, asset_type) list[PriceSeries]
+        +_standardize_dataframe(df, ticker)$ DataFrame
     }
 
     class PriceSeries {
@@ -520,14 +542,15 @@ classDiagram
         +drawdown_series() Series
         +max_drawdown() float
         +value_at_risk(conf) float
+        +conditional_value_at_risk(conf) float
         +simulate_montecarlo(n_sims, horizon) MonteCarloResult
         +plot_montecarlo() Figure
     }
 
     class Portfolio {
         <<dataclass>>
-        +List~PriceSeries~ assets
-        +Union~Dict,List,None~ weights
+        +list~PriceSeries~ assets
+        +Union~Dict,Sequence,None~ weights
         +str name
         +float initial_capital
         +Dict~str,float~ weights_dict
@@ -557,6 +580,25 @@ classDiagram
         +plots_report(figsize, save_path) Figure
     }
 
+    class MetricsUtils {
+        <<utility>>
+        +compute_annualized_return(returns, trading_days)$ float
+        +compute_annualized_volatility(returns, trading_days)$ float
+        +compute_sharpe_ratio(returns, rf, trading_days)$ float
+        +compute_cumulative_returns(returns)$ Series
+        +compute_drawdown_series(returns)$ Series
+        +compute_max_drawdown(returns)$ float
+        +compute_value_at_risk(returns, conf, method)$ float
+        +compute_conditional_value_at_risk(returns, conf)$ float
+    }
+
+    class ReportsLayer {
+        <<presentation>>
+        +build_portfolio_report(portfolio, rf, conf, output_path)$ str
+        +plot_portfolio_dashboard(portfolio, figsize, save_path, show)$ Figure
+        +plot_monte_carlo(result, title, max_paths, conf, figsize, save_path, show)$ Figure
+    }
+
     class MonteCarloEngine {
         <<service>>
         +simulate_gbm(S0, mu, sigma, horizon, n_sims, dt, seed)$ MonteCarloResult
@@ -576,9 +618,9 @@ classDiagram
         +ndarray terminal_values
         +float terminal_mean
         +float terminal_median
-        +float terminal_var
-        +float terminal_cvar
         +float probability_of_loss
+        +terminal_var(conf) float
+        +terminal_cvar(conf) float
         +plot(figsize, save_path) Figure
     }
 
@@ -599,25 +641,33 @@ classDiagram
     BaseDataExtractor <|-- FREDExtractor : implements
     BaseDataExtractor ..> PriceSeries : creates
     Portfolio o-- "1..*" PriceSeries : aggregates
+    PriceSeries ..> MetricsUtils : delegates
+    Portfolio ..> MetricsUtils : delegates
     Portfolio ..> ValidationUtils : validates
     Portfolio ..> CleaningUtils : aligns
     Portfolio ..> MonteCarloEngine : delegates
     PriceSeries ..> MonteCarloEngine : delegates
     MonteCarloEngine ..> MonteCarloResult : produces
+    Portfolio ..> ReportsLayer : delegates
+    MonteCarloResult ..> ReportsLayer : delegates
 ```
 
 #### Layered Data Flow Diagram
 
 ```mermaid
 flowchart LR
-    A[Market APIs<br>Yahoo / FRED] --> B[Extractors<br>BaseDataExtractor]
-    B --> C[PriceSeries<br>DataClass]
-    C --> D[Validation & Cleaning<br>utils layer]
-    D --> E[Portfolio<br>Aggregation]
-    E --> F[MonteCarloEngine<br>GBM / Cholesky]
-    F --> G[MonteCarloResult<br>Cones & Stats]
-    E --> H[Portfolio.report<br>Markdown Report]
-    E --> I[Portfolio.plots_report<br>2x2 Dashboard]
+    A["Market APIs (Yahoo / FRED)"] --> B["Extractors (BaseDataExtractor)"]
+    B --> C["PriceSeries (DataClass)"]
+    C --> D["Validation & Cleaning (utils)"]
+    D --> E["Portfolio (Aggregation)"]
+    C --> M["Metrics (models.metrics)"]
+    E --> M
+    E --> F["MonteCarloEngine (GBM / Cholesky)"]
+    F --> G["MonteCarloResult (Cones & Stats)"]
+    E --> R["ReportsLayer (toolkit.reports)"]
+    G --> R
+    R --> H["Markdown Report (.md)"]
+    R --> I["Visual Dashboards (.png)"]
 ```
 
 See the extended architecture document in [`doc/architecture.md`](doc/architecture.md).
@@ -697,10 +747,18 @@ A `dataclass` aggregating multiple `PriceSeries` assets, managing weights, valid
 ### Installation
 
 ```bash
-cd T1
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .          # run from T1/ (pyproject.toml, src-layout)
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install -e .          # run from repository root (pyproject.toml, src-layout)
+```
+
+Verify installation and run the offline unit test suite:
+
+```bash
+python -c "import toolkit; print(toolkit.__all__)"
+python -m unittest discover -s tests -v
 ```
 
 ### Usage
@@ -721,7 +779,8 @@ report_md = portfolio.report(risk_free_rate=0.03, output_path="examples/reports/
 portfolio.plots_report(save_path="examples/plots/portfolio_dashboard.png", show=False)
 ```
 
-Run test examples:
+Run the offline unit tests and live market validation scripts:
+- `python -m unittest discover -s tests -v` *(offline unit test suite)*
 - `python examples/test_fetch.py`
 - `python examples/test_fetch_fred.py`
 - `python examples/test_portfolio.py`
@@ -737,6 +796,7 @@ Run test examples:
 | `numpy` | ≥ 1.24.0 | Vectorized algebra, Cholesky decomposition, and simulations |
 | `matplotlib` | ≥ 3.7.0 | Plotting trajectories, distributions, and analytics dashboard |
 | `pandas-datareader` | ≥ 0.10.0 | FRED macroeconomic API client |
+| `requests` | ≥ 2.31.0 | HTTP client for direct FRED `fredgraph.csv` fallback |
 
 ---
 
