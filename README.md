@@ -60,7 +60,7 @@ Taller-T1-B1/
 │           └── __init__.py
 ├── tests/                                             # Suite de tests unitarios offline (sin conexión a red)
 │   └── test_toolkit.py                                # Tests ejecutables con unittest o pytest
-├── CLAUDE.md                                          # Guía de contexto y convenciones para asistentes IA
+├── .coderules.md                                      # AI assistant context & architectural guidelines (Claude / Gemini)
 ├── pyproject.toml                                     # Configuración moderna de empaquetado pip/build/ruff/pytest
 └── requirements.txt                                   # Dependencias fijadas del proyecto
 ```
@@ -476,7 +476,7 @@ Taller-T1-B1/
 │           └── __init__.py
 ├── tests/                                             # Offline unit test suite (no network required)
 │   └── test_toolkit.py                                # Runnable with unittest or pytest
-├── CLAUDE.md                                          # AI assistant context & architectural guidelines
+├── .coderules.md                                      # AI assistant context & architectural guidelines (Claude / Gemini)
 ├── pyproject.toml                                     # Modern build system, ruff & pytest configuration
 └── requirements.txt                                   # Pinned dependency requirements
 ```
