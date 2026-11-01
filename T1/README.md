@@ -15,7 +15,7 @@ Este proyecto implementa una toolbox profesional en Python para la ingesta, esta
 
 El diseño sigue una arquitectura modular y desacoplada mediante patrones de diseño orientados a objetos y **DataClasses**, separando estrictamente la capa de extracción de la capa de análisis, modelos, preprocesado y motores de diagnóstico y simulación estocástica.
 
-### Estructura del repositorio
+### Estructura del repositorio taller 
 
 ```
 T1/
